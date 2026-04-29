@@ -1,7 +1,7 @@
 {
   "nombres_hero": "Antonia <span class=\"hero-amp\">&</span> Felipe",
   "fecha_escrita": "DOMINGO 11 DE OCTUBRE, 2026",
-  "tag_feriado": "Lunes 12 es feriado",
+  "info_adicional_bajo_la_fecha": "Lunes 12 es feriado",
   "ubicacion_hero": "Santiago, Chile",
   "fecha_contador": "Oct 11, 2026 16:30:00",
   
@@ -32,6 +32,8 @@
   "link_lista": "https://novios.falabella.com/info-evento/evento?codigoEvento=2104486",
 
   "email_asunto_rsvp": "Asistencia Matrimonio Anto y Felipe confirmada",
-  "email_asunto_cancelacion": "Cancelación de asistencia procesada",
-  "email_asunto_regalo": "¡Muchas gracias por tu regalo!"
+  "email_asunto_cancelacion": "Cancelación de asistencia confirmada",
+  
+  "worker_url": "https://rsvp-api.felipegiacoman.workers.dev",
+  "email_comprobantes": "regalos@antoyfelipe.com"
 }

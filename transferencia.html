@@ -10,19 +10,20 @@
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Montserrat:wght@300;400;500&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
     <style>
         :root { --oro: #b59a7a; --crema: #f2ece4; --texto: #2d2d2d; --oscuro: #1a1a1a; }
         body { font-family: 'Montserrat', sans-serif; background-color: var(--crema); color: var(--texto); padding-top: 80px; overflow-x: hidden; }
         h1, h2, h3, h4, h5, .serif { font-family: 'Playfair Display', serif; }
+
         .navbar { background: rgba(242, 236, 228, 0.95); padding: 0.8rem 0; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
         .nav-link-custom { color: var(--texto); text-decoration: none; text-transform: uppercase; font-size: 0.65rem; letter-spacing: 1px; margin-right: 20px; font-weight: 500; transition: 0.3s; }
         .nav-link-custom:hover { color: var(--oro); }
+
         .btn-gold { background: var(--oro); color: var(--oscuro); font-weight: bold; border: none; padding: 10px 20px; text-transform: uppercase; letter-spacing: 1px; font-size: 0.65rem; text-decoration: none; display: inline-block; transition: 0.3s; text-align: center; cursor: pointer;}
         .btn-gold:hover { background: var(--oscuro); color: var(--oro); }
-        .btn-outline { background: transparent; border: 1px solid var(--oro); color: var(--oro); }
-        .btn-outline:hover { background: var(--oro); color: white; }
+        
         .box-datos { background: white; border: 1px solid rgba(181, 154, 122, 0.3); border-radius: 4px; }
-        #datos-banco { white-space: pre-line; font-size: 1.1rem; line-height: 1.8; color: #555; }
     </style>
 </head>
 <body>
@@ -30,109 +31,145 @@
     <nav class="navbar navbar-expand-lg fixed-top" id="navbar">
         <div class="container d-flex align-items-center">
             <a class="navbar-brand serif fw-bold" href="index.html">A <span style="color:var(--oro)">&</span> F</a>
-            <div class="ms-auto"><a href="index.html" class="nav-link-custom"><i class="bi bi-arrow-left"></i> Volver al inicio</a></div>
+            <div class="ms-auto">
+                <a href="index.html" class="nav-link-custom"><i class="bi bi-arrow-left"></i> Volver al inicio</a>
+            </div>
         </div>
     </nav>
 
-    <section class="container py-5">
+    <section class="container py-5" id="transferencia">
         <div class="row justify-content-center">
             <div class="col-md-8 col-lg-6">
                 
-                <div class="text-center mb-5">
-                    <h2 class="serif">Datos Bancarios</h2>
-                    <p class="text-muted small">El mejor regalo es tu presencia, pero si deseas ayudarnos con nuestra luna de miel o nuestro futuro hogar, puedes hacerlo aquí.</p>
+                <div class="text-center mb-4">
+                    <h2 class="serif">Datos de Transferencia</h2>
+                    <div style="width:60px; height:1px; background:var(--oro); margin: 20px auto;"></div>
+                </div>
+                
+                <div class="box-datos p-4 shadow-sm mb-5 text-center">
+                    <p class="mb-0" id="datos-transferencia" style="white-space: pre-line; line-height: 1.8;">Cargando datos bancarios...</p>
                 </div>
 
-                <div class="box-datos p-4 shadow-sm text-center mb-5">
-                    <i class="bi bi-bank" style="font-size: 2rem; color: var(--oro);"></i>
-                    <div id="datos-banco" class="mt-3">Cargando datos bancarios...</div>
-                </div>
-
-                <div class="text-center mb-4 mt-5">
-                    <h4 class="serif" style="color: var(--oro);">¿Ya hiciste tu transferencia?</h4>
-                    <p class="text-muted small">Déjanos tus datos para enviarte nuestros agradecimientos.</p>
-                </div>
-
-                <form id="formRegalo" class="box-datos p-4 shadow-sm">
+                <form id="regaloForm" method="POST" enctype="multipart/form-data" class="box-datos p-4 shadow-sm">
+                    <h5 class="serif mb-4 text-center" style="color:var(--oro);">Notificar Transferencia</h5>
+                    
+                    <input type="text" name="_honey" style="display:none">
+                    <input type="hidden" name="_captcha" value="false">
+                    <input type="hidden" name="_subject" value="¡Nuevo Regalo/Transferencia de Matrimonio!">
+                    
                     <div class="mb-3">
-                        <label class="form-label small fw-bold" style="color:var(--oro);">TU NOMBRE</label>
-                        <input type="text" class="form-control bg-transparent" id="nombreRegalo" required style="border:1px solid var(--oro);">
-                    </div>
-                    <div class="mb-4">
-                        <label class="form-label small fw-bold" style="color:var(--oro);">TU CORREO</label>
-                        <input type="email" class="form-control bg-transparent" id="emailRegalo" required style="border:1px solid var(--oro);">
+                        <label class="form-label small fw-bold">TU NOMBRE COMPLETO</label>
+                        <input type="text" class="form-control bg-transparent" name="Nombre" id="nombreRegalo" required style="border:1px solid var(--oro);">
                     </div>
                     
-                    <button type="submit" id="btn-enviar-regalo" class="btn-gold w-100 border-0">Avisar a los novios</button>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">TU CORREO</label>
+                        <input type="email" class="form-control bg-transparent" name="Email" id="emailRegalo" placeholder="" required style="border:1px solid var(--oro);">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">MENSAJE PARA LOS NOVIOS (Opcional)</label>
+                        <textarea class="form-control bg-transparent" name="Mensaje" rows="3" style="border:1px solid var(--oro);"></textarea>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold">COMPROBANTE (Opcional)</label>
+                        <p class="text-muted" style="font-size: 0.7rem; margin-top:-5px;">Puedes adjuntar el PDF o una foto (máx. 10MB)</p>
+                        <input type="file" class="form-control bg-transparent" name="Comprobante" accept="image/*,.pdf" style="border:1px solid var(--oro);">
+                    </div>
+                    
+                    <button type="submit" class="btn-gold w-100 border-0">Enviar Regalo</button>
                 </form>
 
             </div>
         </div>
     </section>
 
+    <footer class="py-5 text-center text-muted small">
+        <p class="serif fs-4 mb-1" style="color:var(--oro)">A & F</p>
+        <p>Hecho con ❤️ para nuestro matri</p>
+    </footer>
+
     <script>
         let SCRIPT_URL = "";
-        let asuntoRegalo = "¡Muchas gracias por tu regalo!";
-        let cuerpoRegalo = "Hemos recibido tu regalo con mucho cariño.";
+        let asuntoRegalo = "¡Gracias por tu regalo!";
+        let cuerpoRegalo = "Hemos recibido tu confirmación de transferencia. ¡Mil gracias por acompañarnos en este proceso!";
 
         async function inicializarTransferencia() {
             try {
-                // 1. LEER CONFIG.JSON
+                // 1. LEER ARCHIVO MAESTRO
                 const cfgRes = await fetch('config.json');
                 const cfg = await cfgRes.json();
                 
                 SCRIPT_URL = cfg.worker_url;
-                asuntoRegalo = cfg.email_asunto_regalo || asuntoRegalo;
+                if(cfg.email_asunto_regalo) asuntoRegalo = cfg.email_asunto_regalo;
                 document.getElementById('cfg-page-title').innerText = "Transferencia — " + cfg.nombres_hero.replace(/<[^>]*>?/gm, '');
+
+                // ASIGNAR CORREO RECEPTOR DINÁMICO A FORMSUBMIT
+                const correoComprobantes = cfg.email_comprobantes || "regalos@antoyfelipe.com";
+                document.getElementById('regaloForm').action = "https://formsubmit.co/" + correoComprobantes;
+
             } catch (err) {
-                console.log("Cargando variables por defecto.");
+                console.log("No se pudo cargar config.json, usando variables por defecto.");
+                document.getElementById('regaloForm').action = "https://formsubmit.co/regalos@antoyfelipe.com";
             }
 
-            // 2. LEER DATOS BANCARIOS (TXT)
+            // 2. CARGA DE DATOS BANCARIOS
             fetch('datos_transferencia.txt')
-                .then(r => r.text())
-                .then(t => document.getElementById('datos-banco').innerText = t)
-                .catch(e => document.getElementById('datos-banco').innerText = "Por favor comunícate con los novios para los datos de transferencia.");
+                .then(res => {
+                    if (!res.ok) throw new Error("No se encontró el archivo");
+                    return res.text();
+                })
+                .then(texto => {
+                    document.getElementById('datos-transferencia').textContent = texto.trim();
+                })
+                .catch(err => {
+                    document.getElementById('datos-transferencia').textContent = "Error al cargar los datos bancarios. Por favor recarga la página.";
+                });
 
-            // 3. LEER CUERPO DEL CORREO DE AGRADECIMIENTO (TXT)
-            fetch('cuerpo_regalo.txt')
-                .then(r => r.text())
-                .then(t => cuerpoRegalo = t.trim())
-                .catch(e => console.log("Usando cuerpo de regalo por defecto."));
+            // 3. CARGA DEL TEXTO DE AGRADECIMIENTO (CORREO AUTOMÁTICO)
+            fetch('cuerpo_regalo.txt').then(r => { if(r.ok) return r.text(); throw new Error(); }).then(t => cuerpoRegalo = t.trim()).catch(e => console.warn("Usando cuerpo por defecto"));
         }
 
         inicializarTransferencia();
 
-        // 4. LÓGICA DE ENVÍO
-        document.getElementById('formRegalo').onsubmit = function(e) {
-            e.preventDefault();
-            if (!SCRIPT_URL) { alert("El sistema se está conectando. Intenta en un segundo."); return; }
+        // 4. LÓGICA DE ENVÍO SECUENCIAL (Worker -> FormSubmit)
+        document.getElementById('regaloForm').onsubmit = function(e) {
+            e.preventDefault(); 
+            
+            const form = this;
+            const btn = form.querySelector('button[type="submit"]');
+            btn.innerText = "ENVIANDO CORREO...";
+            btn.disabled = true;
 
-            const btn = document.getElementById('btn-enviar-regalo');
-            btn.innerText = "ENVIANDO..."; btn.disabled = true;
+            if (!SCRIPT_URL) {
+                btn.innerText = "PROCESANDO COMPROBANTE...";
+                form.submit();
+                return;
+            }
 
-            const payload = {
-                tipo: "regalo",
-                nombre: document.getElementById('nombreRegalo').value,
-                email: document.getElementById('emailRegalo').value,
-                asunto: asuntoRegalo,
-                cuerpo: cuerpoRegalo
-            };
-
+            // A) Disparar el Worker para enviar el correo de agradecimiento al invitado
             fetch(SCRIPT_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
+                body: JSON.stringify({
+                    tipo: "regalo",
+                    nombre: document.getElementById('nombreRegalo').value,
+                    email: document.getElementById('emailRegalo').value,
+                    asunto: asuntoRegalo,
+                    cuerpo: cuerpoRegalo
+                })
             })
-            .then(async res => {
-                const data = await res.json();
-                if(data.error) throw new Error(data.error); 
-                alert("¡Muchísimas gracias! Notificación enviada con éxito.");
-                window.location.href = "index.html";
+            .then(() => {
+                // B) Si el Worker funciona, enviamos el comprobante a los novios vía FormSubmit
+                btn.innerText = "PROCESANDO COMPROBANTE...";
+                form.submit(); 
             })
             .catch(err => {
-                alert("¡Muchísimas gracias! Notificación procesada.");
-                window.location.href = "index.html";
+                console.error("Error en el Worker:", err);
+                // Si el Worker falla, igual enviamos el comprobante a los novios para no perder la info
+                btn.innerText = "PROCESANDO COMPROBANTE...";
+                form.submit();
             });
         };
     </script>

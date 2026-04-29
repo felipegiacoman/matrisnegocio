@@ -44,7 +44,6 @@
         
         .wa-float { position: fixed; bottom: 30px; right: 30px; background: #25d366; color: white; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 30px; z-index: 1000; text-decoration: none; box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
 
-        /* Estilos del Itinerario */
         .timeline-container { position: relative; max-width: 600px; margin: 0 auto; padding: 20px 0; overflow: hidden; }
         .timeline-container::before { content: ''; position: absolute; top: 0; bottom: 0; left: 50%; width: 1px; background-color: var(--oro); transform: translateX(-50%); z-index: 1;}
         .timeline-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; position: relative; z-index: 2; width: 100%; }
@@ -163,7 +162,6 @@
             <h2 class="display-5 serif">Itinerario</h2>
             <div style="width:60px; height:1px; background:var(--oro); margin: 25px auto;"></div>
         </div>
-
         <div class="timeline-container">
             <div class="timeline-container-top-dot"></div>
             
@@ -216,7 +214,6 @@
                 </div>
                 <div class="timeline-right"><img src="icono_time_termino.png" class="timeline-icon" alt="Término Fiesta"></div>
             </div>
-
         </div>
     </section>
 
@@ -282,69 +279,73 @@
     <script>
         AOS.init({ duration: 1000, once: true });
 
-        // --- SISTEMA MANTENEDOR: LECTURA DE CONFIG.JSON Y TXT ---
-        let asuntoRSVP = "Asistencia Matrimonio confirmada";
-        let cuerpoRSVP = "Tu asistencia ha sido confirmada.";
+        let SCRIPT_URL = "";
+        let asuntoRSVP = "";
+        let cuerpoRSVP = "";
         let targetContador = null;
 
-        fetch('config.json')
-            .then(res => res.json())
-            .then(cfg => {
-                document.getElementById('cfg-page-title').innerText = cfg.nombres_hero.replace(/<[^>]*>?/gm, '') + " — Matrimonio";
+        async function inicializarSitio() {
+            try {
+                const cfgRes = await fetch('config.json');
+                const cfg = await cfgRes.json();
                 
+                SCRIPT_URL = cfg.worker_url;
+
+                document.getElementById('cfg-page-title').innerText = cfg.nombres_hero.replace(/<[^>]*>?/gm, '') + " — Matrimonio";
                 document.getElementById('cfg-nombres-hero').innerHTML = cfg.nombres_hero;
                 document.getElementById('cfg-fecha-escrita').innerText = cfg.fecha_escrita;
-                document.getElementById('cfg-tag-feriado').innerText = cfg.tag_feriado;
-                document.getElementById('cfg-ubicacion-hero').innerText = cfg.ubicacion_hero;
                 
+                // ACTUALIZACIÓN DE LA NUEVA VARIABLE
+                document.getElementById('cfg-tag-feriado').innerText = cfg.info_adicional_bajo_la_fecha;
+                
+                document.getElementById('cfg-ubicacion-hero').innerText = cfg.ubicacion_hero;
                 document.getElementById('cfg-titulo-eventos').innerText = cfg.titulo_seccion_eventos;
                 document.getElementById('nav-titulo-eventos').innerText = cfg.titulo_seccion_eventos;
-                
                 document.getElementById('cfg-ceremonia-titulo').innerText = cfg.ceremonia_titulo;
                 document.getElementById('cfg-ceremonia-hora').innerText = cfg.ceremonia_hora;
                 document.getElementById('cfg-ceremonia-lugar').innerText = cfg.ceremonia_lugar;
                 document.getElementById('cfg-ceremonia-direccion').innerText = cfg.ceremonia_direccion;
                 document.getElementById('cfg-waze-ceremonia').href = cfg.link_waze_ceremonia;
                 document.getElementById('cfg-maps-ceremonia').href = cfg.link_maps_ceremonia;
-                
                 document.getElementById('cfg-recepcion-titulo').innerText = cfg.recepcion_titulo;
                 document.getElementById('cfg-recepcion-hora').innerText = cfg.recepcion_hora;
                 document.getElementById('cfg-recepcion-lugar').innerText = cfg.recepcion_lugar;
                 document.getElementById('cfg-recepcion-direccion').innerText = cfg.recepcion_direccion;
                 document.getElementById('cfg-waze-recepcion').href = cfg.link_waze_recepcion;
                 document.getElementById('cfg-maps-recepcion').href = cfg.link_maps_recepcion;
-
                 document.getElementById('cfg-itinerario-ceremonia').innerText = cfg.itinerario_hora_ceremonia;
                 document.getElementById('cfg-itinerario-recepcion').innerText = cfg.itinerario_hora_recepcion;
                 document.getElementById('cfg-itinerario-cena').innerText = cfg.itinerario_hora_cena;
                 document.getElementById('cfg-itinerario-fiesta').innerText = cfg.itinerario_hora_fiesta;
                 document.getElementById('cfg-itinerario-termino').innerText = cfg.itinerario_hora_termino;
-
                 document.getElementById('cfg-titulo-transferencia').innerText = cfg.titulo_transferencia;
                 document.getElementById('cfg-titulo-lista').innerText = cfg.titulo_lista;
                 document.getElementById('cfg-link-lista').href = cfg.link_lista;
-
+                
                 asuntoRSVP = cfg.email_asunto_rsvp;
                 targetContador = cfg.fecha_contador;
-            })
-            .catch(err => console.error("No se encontró config.json", err));
 
-        // LECTURA DE TEXTOS LARGOS DESDE TXT
-        fetch('historia.txt').then(r => r.text()).then(t => document.getElementById('historia-texto').innerText = t).catch(e => document.getElementById('historia-texto').innerText = "Nuestra historia...");
-        fetch('cuerpo_rsvp.txt').then(r => r.text()).then(t => cuerpoRSVP = t.trim()).catch(e => console.log("Usando cuerpo RSVP por defecto."));
-
-        const SCRIPT_URL = "https://rsvp-api.felipegiacoman.workers.dev";
-
-        fetch(SCRIPT_URL).then(res => res.json()).then(data => {
-            const datalist = document.getElementById('listaInvitadosBD');
-            data.forEach(item => {
-                if(item.nombre_invitado) {
-                    let opt = document.createElement('option');
-                    opt.value = item.nombre_invitado;
-                    datalist.appendChild(opt);
+                if (SCRIPT_URL) {
+                    const dbRes = await fetch(SCRIPT_URL);
+                    const data = await dbRes.json();
+                    const datalist = document.getElementById('listaInvitadosBD');
+                    data.forEach(item => {
+                        if(item.nombre_invitado) {
+                            let opt = document.createElement('option');
+                            opt.value = item.nombre_invitado;
+                            datalist.appendChild(opt);
+                        }
+                    });
                 }
-            });
-        }).catch(err => console.error("Error cargando nombres:", err));
+            } catch (error) {
+                console.error("Error al cargar la plantilla:", error);
+            }
+
+            fetch('historia.txt').then(r => r.text()).then(t => document.getElementById('historia-texto').innerText = t).catch(e => document.getElementById('historia-texto').innerText = "Nuestra historia...");
+            fetch('cuerpo_rsvp.txt').then(r => r.text()).then(t => cuerpoRSVP = t.trim()).catch(e => console.log("Usando cuerpo RSVP por defecto."));
+        }
+
+        inicializarSitio();
 
         function limpiarRut(rut) { return rut.replace(/[^0-9kK]/g, '').toUpperCase(); }
         function validarRutAlgoritmo(rutLimpio) {
@@ -423,6 +424,8 @@
 
         document.getElementById('rsvpForm').onsubmit = function(e) {
             e.preventDefault();
+            if (!SCRIPT_URL) { alert("El sistema se está inicializando, intenta de nuevo en unos segundos."); return; }
+
             const btn = document.getElementById('btn-enviar-rsvp');
             btn.innerText = "ENVIANDO..."; btn.disabled = true;
 

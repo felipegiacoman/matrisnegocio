@@ -87,29 +87,38 @@
     </section>
 
     <script>
-        const SCRIPT_URL = "https://rsvp-api.felipegiacoman.workers.dev";
-        
+        let SCRIPT_URL = "";
         let asuntoCancelacion = "Cancelación de asistencia confirmada";
-        let cuerpoCancelacion = "Hemos procesado tu cancelación. Sentimos mucho que no puedas asistir.";
+        let cuerpoCancelacion = "Hemos procesado tu cancelación.";
+        let listaNombresGlobal = [];
 
-        // --- SISTEMA MANTENEDOR: LECTURA DE CONFIG.JSON Y TXT ---
-        fetch('config.json')
-            .then(res => res.json())
-            .then(cfg => {
+        // --- INICIALIZADOR ASÍNCRONO ---
+        async function inicializarCancelacion() {
+            try {
+                // 1. LEER ARCHIVO MAESTRO
+                const cfgRes = await fetch('config.json');
+                const cfg = await cfgRes.json();
+                
+                // ASIGNAR URL DEL WORKER
+                SCRIPT_URL = cfg.worker_url;
                 asuntoCancelacion = cfg.email_asunto_cancelacion;
                 document.getElementById('cfg-page-title').innerText = "Cancelar Asistencia — " + cfg.nombres_hero.replace(/<[^>]*>?/gm, '');
-            })
-            .catch(err => console.log("Usando asunto de cancelación por defecto."));
 
-        fetch('cuerpo_cancelacion.txt').then(r => r.text()).then(t => cuerpoCancelacion = t.trim()).catch(e => console.log("Usando cuerpo por defecto."));
+                // 2. CARGAR NOMBRES PARA EL BUSCADOR (Solo si el config lo entregó)
+                if (SCRIPT_URL) {
+                    const dbRes = await fetch(SCRIPT_URL);
+                    const data = await dbRes.json();
+                    listaNombresGlobal = data.filter(item => item.nombre_invitado).map(item => item.nombre_invitado);
+                }
+            } catch (err) {
+                console.error("Error al cargar configuración", err);
+            }
 
-        let listaNombresGlobal = [];
-        fetch(SCRIPT_URL)
-            .then(res => res.json())
-            .then(data => {
-                listaNombresGlobal = data.filter(item => item.nombre_invitado).map(item => item.nombre_invitado);
-            })
-            .catch(err => console.error("Error cargando nombres:", err));
+            // 3. LEER EL TXT DEL CORREO
+            fetch('cuerpo_cancelacion.txt').then(r => r.text()).then(t => cuerpoCancelacion = t.trim()).catch(e => console.log("Usando cuerpo por defecto."));
+        }
+
+        inicializarCancelacion();
 
         let contadorCancelados = 0;
         const btnSolo = document.getElementById('btn-solo');
@@ -160,7 +169,7 @@
                             inputNombre.value = nombre;
                             sugerenciasBox.style.display = 'none';
                             
-                            if (!document.getElementById('emailCancelacion').value) {
+                            if (!document.getElementById('emailCancelacion').value && SCRIPT_URL) {
                                 try {
                                     const res = await fetch(SCRIPT_URL + "?nombre=" + encodeURIComponent(nombre));
                                     const data = await res.json();
@@ -215,6 +224,8 @@
 
         document.getElementById('cancelacionForm').onsubmit = function(e) {
             e.preventDefault();
+            if (!SCRIPT_URL) { alert("El sistema se está inicializando. Intenta en un segundo."); return; }
+
             const btn = document.getElementById('btn-enviar-cancelacion');
             btn.innerText = "PROCESANDO..."; btn.disabled = true;
 
