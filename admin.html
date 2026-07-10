@@ -5,24 +5,27 @@
     <title>Panel Banquetería - Matrimonio</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body { background: #f8f9fa; font-family: sans-serif; }
-        .card { border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        h3 { color: #b59a7a; }
+        body { background: #f4f1ea; font-family: 'Montserrat', sans-serif; }
+        .stat-card { background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); text-align: center; border-top: 4px solid #b59a7a; }
+        .stat-val { font-size: 1.8rem; font-weight: bold; color: #2d2d2d; }
     </style>
 </head>
 <body class="p-4">
     <div class="container">
-        <h2 class="mb-4">Resumen para Banquetería</h2>
+        <h2 class="mb-4 text-center">Resumen de Asistencia (En Vivo)</h2>
         
-        <div class="row" id="stats-container">
-            <!-- Aquí se cargarán las tarjetas de resumen -->
+        <div class="row g-3 mb-5" id="stats-container">
+            <div class="col-md-3"><div class="stat-card"><h5>Adultos</h5><div class="stat-val" id="adult-val">0</div></div></div>
+            <div class="col-md-3"><div class="stat-card"><h5>Niños</h5><div class="stat-val" id="nino-val">0</div></div></div>
+            <div class="col-md-3"><div class="stat-card"><h5>Veganos</h5><div class="stat-val" id="veg-val">0</div></div></div>
+            <div class="col-md-3"><div class="stat-card"><h5>Celiacos</h5><div class="stat-val" id="cel-val">0</div></div></div>
         </div>
 
-        <div class="card mt-4 p-4">
-            <h4>Detalle de Invitados</h4>
-            <table class="table table-hover mt-3">
-                <thead>
-                    <tr><th>Invitado</th><th>Pareja</th><th>Restricción Invitado</th><th>Restricción Pareja</th></tr>
+        <div class="table-container bg-white p-4 rounded shadow-sm">
+            <h4>Detalle Completo</h4>
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr><th>Invitado</th><th>Pareja</th><th>Restricciones</th><th>Tipo</th></tr>
                 </thead>
                 <tbody id="lista-tabla"></tbody>
             </table>
@@ -31,34 +34,47 @@
 
     <script>
         async function cargarPanel() {
-            const cfg = await (await fetch('config.json')).json();
-            // Solicitamos todos los confirmados al Worker
-            const res = await fetch(cfg.worker_url + "?action=confirmados");
-            const data = await res.json();
+            try {
+                const cfg = await (await fetch('config.json')).json();
+                // Pedimos confirmados Y lista maestra para cruzar datos de quién es niño
+                const [resConf, resMaestra] = await Promise.all([
+                    fetch(cfg.worker_url + "?action=confirmados"),
+                    fetch(cfg.worker_url + "?action=lista")
+                ]);
+                const confirmados = await resConf.json();
+                const maestra = await resMaestra.json();
 
-            let totalAdultos = 0, totalNinos = 0, dietas = { 'Ninguna': 0, 'Vegano': 0, 'Vegetariano': 0, 'Celiaco': 0 };
+                let adultos = 0, ninos = 0, dietas = { 'Vegano': 0, 'Celiaco': 0 };
+                let html = "";
 
-            let html = "";
-            data.forEach(p => {
-                // Sumar dietas
-                if(dietas.hasOwnProperty(p.dieta)) dietas[p.dieta]++;
-                if(p.lleva_pareja === "Sí" && dietas.hasOwnProperty(p.dieta_pareja)) dietas[p.dieta_pareja]++;
+                confirmados.forEach(p => {
+                    // Cruce para saber si es niño
+                    const infoMaestra = maestra.find(m => m.nombre === p.nombre_invitado);
+                    const esNino = infoMaestra ? infoMaestra.nino === 1 : false;
 
-                // Calcular totales (si tienes una forma de identificar niños, aquí se ajusta)
-                totalAdultos++; 
-                if(p.lleva_pareja === "Sí") totalAdultos++;
+                    if (esNino) ninos++; else adultos++;
+                    
+                    // Sumar pareja
+                    if (p.lleva_pareja === "Sí") adultos++;
 
-                html += `<tr><td>${p.nombre_invitado}</td><td>${p.nombre_pareja}</td><td>${p.dieta}</td><td>${p.dieta_pareja}</td></tr>`;
-            });
+                    // Sumar dietas
+                    if(dietas.hasOwnProperty(p.dieta)) dietas[p.dieta]++;
+                    if(p.lleva_pareja === "Sí" && dietas.hasOwnProperty(p.dieta_pareja)) dietas[p.dieta_pareja]++;
 
-            // Dibujar tarjetas de resumen
-            document.getElementById('stats-container').innerHTML = `
-                <div class="col-md-3"><div class="card p-3"><h5>Total Personas</h5><h3>${totalAdultos}</h3></div></div>
-                <div class="col-md-3"><div class="card p-3"><h5>Veganos</h5><h3>${dietas['Vegano']}</h3></div></div>
-                <div class="col-md-3"><div class="card p-3"><h5>Vegetarianos</h5><h3>${dietas['Vegetariano']}</h3></div></div>
-                <div class="col-md-3"><div class="card p-3"><h5>Celiacos</h5><h3>${dietas['Celiaco']}</h3></div></div>
-            `;
-            document.getElementById('lista-tabla').innerHTML = html;
+                    html += `<tr>
+                        <td><strong>${p.nombre_invitado}</strong></td>
+                        <td>${p.nombre_pareja && p.nombre_pareja !== "Pendiente" ? p.nombre_pareja : '-'}</td>
+                        <td>${p.dieta} / ${p.dieta_pareja || '-'}</td>
+                        <td><span class="badge ${esNino ? 'bg-info' : 'bg-primary'}">${esNino ? 'Niño' : 'Adulto'}</span></td>
+                    </tr>`;
+                });
+
+                document.getElementById('adult-val').innerText = adultos;
+                document.getElementById('nino-val').innerText = ninos;
+                document.getElementById('veg-val').innerText = dietas['Vegano'];
+                document.getElementById('cel-val').innerText = dietas['Celiaco'];
+                document.getElementById('lista-tabla').innerHTML = html;
+            } catch(e) { console.error("Error crítico:", e); }
         }
         cargarPanel();
     </script>
