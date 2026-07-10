@@ -57,6 +57,12 @@
         .timeline-container::after { content: ''; position: absolute; bottom: 0; left: 50%; width: 5px; height: 5px; background-color: var(--oro); border-radius: 50%; transform: translateX(-50%); }
         .timeline-container-top-dot { position: absolute; top: 0; left: 50%; width: 5px; height: 5px; background-color: var(--oro); border-radius: 50%; transform: translateX(-50%); z-index: 2;}
 
+        /* ESTILOS PARA AUTOCOMPLETADO */
+        .sugerencias-container { position: absolute; z-index: 1050; background: white; width: 100%; max-height: 200px; overflow-y: auto; border: 1px solid var(--oro); border-top: none; border-radius: 0 0 4px 4px; display: none; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .sugerencia-item { cursor: pointer; padding: 10px 15px; border-bottom: 1px solid #f2ece4; font-size: 0.85rem; transition: background 0.2s;}
+        .sugerencia-item:last-child { border-bottom: none; }
+        .sugerencia-item:hover { background-color: var(--crema); color: var(--oro); font-weight: 500; }
+
         @media (max-width: 768px) {
             .timeline-container { padding: 10px 5px; overflow-x: hidden; }
             .timeline-container::before, .timeline-row::after, .timeline-container::after, .timeline-container-top-dot { left: 50% !important; transform: translateX(-50%) !important; }
@@ -179,8 +185,8 @@
                 <div class="timeline-left"><img src="icono_time_recepcion.png" class="timeline-icon" alt="Recepción"></div>
                 <div class="timeline-right">
                     <div class="timeline-text-box border-dashed">
-                        <div id="cfg-itinerario-recepcion"></div>
                         <div>Recepción</div>
+                        <div id="cfg-itinerario-recepcion"></div>
                     </div>
                 </div>
             </div>
@@ -188,8 +194,8 @@
             <div class="timeline-row" data-aos="fade-up">
                 <div class="timeline-left">
                     <div class="timeline-text-box border-dashed">
-                        <div id="cfg-itinerario-cena"></div>
                         <div>Cena</div>
+                        <div id="cfg-itinerario-cena"></div>
                     </div>
                 </div>
                 <div class="timeline-right"><img src="icono_time_cena.png" class="timeline-icon" alt="Cena"></div>
@@ -199,17 +205,17 @@
                 <div class="timeline-left"><img src="icono_time_fiesta.png" class="timeline-icon" alt="Fiesta"></div>
                 <div class="timeline-right">
                     <div class="timeline-text-box border-dashed">
-                        <div id="cfg-itinerario-fiesta"></div>
                         <div>Fiesta</div>
+                        <div id="cfg-itinerario-fiesta"></div>
                     </div>
                 </div>
             </div>
 
             <div class="timeline-row" data-aos="fade-up">
                 <div class="timeline-left">
-                    <div class="timeline-text-box border-dashed">
+                    <div class="timeline-text-box border-dashed" style="border-bottom: none;">
+                        <div>Término de la Fiesta</div>
                         <div id="cfg-itinerario-termino"></div>
-                        <div>Término Fiesta</div>
                     </div>
                 </div>
                 <div class="timeline-right"><img src="icono_time_termino.png" class="timeline-icon" alt="Término Fiesta"></div>
@@ -240,9 +246,9 @@
     <section class="container py-5 text-center" id="rsvp">
         <h2 class="serif h1 mb-4" data-aos="fade-up">Confirmar Asistencia</h2>
         <p class="text-muted mb-5">Selecciona cómo deseas confirmar tu asistencia.</p>
-
         <div class="row justify-content-center">
             <div class="col-md-8 col-lg-6 text-start" data-aos="fade-up">
+                
                 <div id="seleccion-modo" class="d-flex flex-column flex-md-row justify-content-center gap-3 mb-4">
                     <button id="btn-solo" class="btn-gold flex-grow-1">Confirmar solo por mí</button>
                     <button id="btn-grupo" class="btn-gold btn-outline flex-grow-1">Confirmar grupo familiar</button>
@@ -250,21 +256,24 @@
 
                 <div id="contenedor-formulario" style="display: none;">
                     <form id="rsvpForm" class="p-4 border bg-white shadow-sm">
+                        
                         <div id="lista-invitados-dinamica"></div>
+                        
                         <button type="button" id="btn-agregar-familiar" class="btn-gold btn-outline w-100 mb-4 mt-2" style="display: none;">
                             <i class="bi bi-plus me-1"></i> Ingresa el próximo miembro familiar
                         </button>
+                        
                         <button type="submit" id="btn-enviar-rsvp" class="btn-gold w-100 mt-2 border-0">Enviar Confirmación</button>
                     </form>
                 </div>
-                
+
                 <div class="text-center mt-4" data-aos="fade-up">
                     <p class="text-muted small mb-2">¿No puedes asistir?</p>
                     <a href="cancelacion.html" class="btn-gold btn-outline" style="padding: 5px 15px;">Confirmar Inasistencia</a>
                 </div>
+
             </div>
         </div>
-        <datalist id="listaInvitadosBD"></datalist>
     </section>
 
     <footer class="py-5 text-center text-muted small">
@@ -283,6 +292,7 @@
         let asuntoRSVP = "";
         let cuerpoRSVP = "";
         let targetContador = null;
+        let listaInvitadosGlobal = []; // Guarda objetos: {nombre_invitado: 'Juan', permite_pareja: 1}
 
         async function inicializarSitio() {
             try {
@@ -290,14 +300,10 @@
                 const cfg = await cfgRes.json();
                 
                 SCRIPT_URL = cfg.worker_url;
-
                 document.getElementById('cfg-page-title').innerText = cfg.nombres_hero.replace(/<[^>]*>?/gm, '') + " — Matrimonio";
                 document.getElementById('cfg-nombres-hero').innerHTML = cfg.nombres_hero;
                 document.getElementById('cfg-fecha-escrita').innerText = cfg.fecha_escrita;
-                
-                // ACTUALIZACIÓN DE LA NUEVA VARIABLE
                 document.getElementById('cfg-tag-feriado').innerText = cfg.info_adicional_bajo_la_fecha;
-                
                 document.getElementById('cfg-ubicacion-hero').innerText = cfg.ubicacion_hero;
                 document.getElementById('cfg-titulo-eventos').innerText = cfg.titulo_seccion_eventos;
                 document.getElementById('nav-titulo-eventos').innerText = cfg.titulo_seccion_eventos;
@@ -325,17 +331,10 @@
                 asuntoRSVP = cfg.email_asunto_rsvp;
                 targetContador = cfg.fecha_contador;
 
+                // Cargar invitados de la Base de Datos al arreglo global
                 if (SCRIPT_URL) {
                     const dbRes = await fetch(SCRIPT_URL);
-                    const data = await dbRes.json();
-                    const datalist = document.getElementById('listaInvitadosBD');
-                    data.forEach(item => {
-                        if(item.nombre_invitado) {
-                            let opt = document.createElement('option');
-                            opt.value = item.nombre_invitado;
-                            datalist.appendChild(opt);
-                        }
-                    });
+                    listaInvitadosGlobal = await dbRes.json();
                 }
             } catch (error) {
                 console.error("Error al cargar la plantilla:", error);
@@ -372,9 +371,10 @@
             return `
             <div class="bloque-invitado mb-4 pb-4 ${id > 1 ? 'border-top pt-4' : ''}" id="invitado-${id}">
                 ${id > 1 ? `<div class="d-flex justify-content-between mb-3"><h5 class="serif m-0" style="color:var(--oro);">Familiar #${id}</h5><button type="button" class="btn-close" onclick="document.getElementById('invitado-${id}').remove()"></button></div>` : ''}
-                <div class="mb-3">
+                <div class="mb-3 position-relative">
                     <label class="form-label small fw-bold" style="color:var(--oro);">NOMBRE COMPLETO</label>
-                    <input type="text" class="form-control bg-transparent nombre-buscar" list="listaInvitadosBD" name="nombre" required style="border:1px solid var(--oro);">
+                    <input type="text" class="form-control bg-transparent nombre-buscar" name="nombre" autocomplete="off" placeholder="Escribe para buscar tu nombre..." required style="border:1px solid var(--oro);">
+                    <div class="sugerencias-container"></div>
                 </div>
                 <div class="datos-extra" style="display:none;">
                     <div class="row g-3">
@@ -391,8 +391,27 @@
                             <option value="Celiaco">Celiaco</option>
                         </select>
                     </div>
-                    <div class="form-check mb-2"><input class="form-check-input check-pareja" type="checkbox" id="cp-${id}"><label class="form-check-label small fw-bold" for="cp-${id}">MI INVITACIÓN INCLUYE PAREJA</label></div>
-                    <div class="campo-pareja" style="display:none;"><input type="text" class="form-control input-pareja" name="nombre_pareja" placeholder="Nombre completo pareja"></div>
+                    <div class="seccion-pareja-opcional mt-4" style="display:none; background: rgba(181, 154, 122, 0.05); padding: 15px; border-radius: 4px; border-left: 3px solid var(--oro);">
+                        <div class="form-check mb-2">
+                            <input class="form-check-input check-pareja" type="checkbox" id="cp-${id}">
+                            <label class="form-check-label small fw-bold" for="cp-${id}">VOY CON MI PAREJA</label>
+                        </div>
+                        <div class="campo-pareja mt-3" style="display:none;">
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">NOMBRE DE TU PAREJA</label>
+                                <input type="text" class="form-control input-pareja" name="nombre_pareja" placeholder="Nombre completo">
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label small fw-bold">RESTRICCIÓN ALIMENTARIA (PAREJA)</label>
+                                <select class="form-select dieta-pareja" name="dieta_pareja">
+                                    <option value="Ninguna">Ninguna</option>
+                                    <option value="Vegano">Vegano(a)</option>
+                                    <option value="Vegetariano">Vegetariano(a)</option>
+                                    <option value="Celiaco">Celiaco</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>`;
         }
@@ -402,7 +421,56 @@
             listaDinamica.insertAdjacentHTML('beforeend', crearBloqueInvitado(contadorInvitados));
             const bloque = document.getElementById(`invitado-${contadorInvitados}`);
             
-            bloque.querySelector('.nombre-buscar').addEventListener('input', function() { bloque.querySelector('.datos-extra').style.display = this.value.length > 3 ? 'block' : 'none'; });
+            const inputNombre = bloque.querySelector('.nombre-buscar');
+            const sugerenciasBox = bloque.querySelector('.sugerencias-container');
+            const datosExtra = bloque.querySelector('.datos-extra');
+            const seccionPareja = bloque.querySelector('.seccion-pareja-opcional');
+
+            inputNombre.addEventListener('input', function() {
+                const val = this.value.toLowerCase();
+                sugerenciasBox.innerHTML = '';
+                datosExtra.style.display = 'none';
+                
+                if (!val) {
+                    sugerenciasBox.style.display = 'none';
+                    return;
+                }
+                
+                const filtrados = listaInvitadosGlobal.filter(n => n.nombre_invitado.toLowerCase().includes(val));
+                
+                if (filtrados.length > 0) {
+                    filtrados.forEach(inv => {
+                        const divItem = document.createElement('div');
+                        divItem.className = 'sugerencia-item';
+                        divItem.innerText = inv.nombre_invitado;
+                        
+                        divItem.onclick = function() {
+                            inputNombre.value = inv.nombre_invitado;
+                            sugerenciasBox.style.display = 'none';
+                            datosExtra.style.display = 'block';
+                            
+                            if (inv.permite_pareja === 1 || inv.permite_pareja === "1") {
+                                seccionPareja.style.display = 'block';
+                            } else {
+                                seccionPareja.style.display = 'none';
+                                bloque.querySelector('.check-pareja').checked = false;
+                                bloque.querySelector('.campo-pareja').style.display = 'none';
+                            }
+                        };
+                        sugerenciasBox.appendChild(divItem);
+                    });
+                    sugerenciasBox.style.display = 'block';
+                } else {
+                    sugerenciasBox.style.display = 'none';
+                }
+            });
+
+            document.addEventListener('click', function(e) {
+                if (e.target !== inputNombre && e.target !== sugerenciasBox) {
+                    sugerenciasBox.style.display = 'none';
+                }
+            });
+
             bloque.querySelector('.check-pareja').addEventListener('change', function() { bloque.querySelector('.campo-pareja').style.display = this.checked ? 'block' : 'none'; });
             bloque.querySelector('.rut-input').addEventListener('blur', function() { let rutLimpio = limpiarRut(this.value); if (rutLimpio.length >= 2) { this.value = darFormatoRut(rutLimpio); } });
 
@@ -413,7 +481,7 @@
                 else if (/^9\d{8}$/.test(telRaw)) this.value = '+56' + telRaw;
                 else if (/^569\d{8}$/.test(telRaw)) this.value = '+' + telRaw;
                 let digitos = this.value.replace(/\D/g, '');
-                if (digitos.length > 0 && digitos.length < 8) { this.setCustomValidity("Número muy corto. Faltan dígitos."); this.reportValidity(); } else { this.setCustomValidity(""); }
+                if (digitos.length > 0 && digitos.length < 8) { this.setCustomValidity("Número muy corto."); this.reportValidity(); } else { this.setCustomValidity(""); }
             });
             inputTel.addEventListener('input', function() { this.setCustomValidity(""); });
         }
@@ -434,6 +502,13 @@
 
             for (let b of bloques) {
                 const nombre = b.querySelector('.nombre-buscar').value;
+                
+                const existeEnBd = listaInvitadosGlobal.some(inv => inv.nombre_invitado === nombre);
+                if (!existeEnBd) {
+                    alert(`El nombre "${nombre}" no se encuentra en la lista de invitados. Por favor, búscalo en el listado desplegable.`);
+                    btn.innerText = "Enviar Confirmación"; btn.disabled = false; return;
+                }
+
                 const rutRaw = b.querySelector('[name="rut"]').value;
                 const rutLimpio = limpiarRut(rutRaw);
                 
@@ -442,9 +517,14 @@
                 if (telInput.value.replace(/\D/g, '').length < 8) { telInput.setCustomValidity("Número muy corto."); telInput.reportValidity(); btn.innerText = "Enviar Confirmación"; btn.disabled = false; return; }
 
                 listaParaEnviar.push({
-                    nombre_invitado: nombre, rut: darFormatoRut(rutLimpio), email: b.querySelector('[name="email"]').value,
-                    telefono: telInput.value, dieta: b.querySelector('[name="dieta"]').value,
-                    lleva_pareja: b.querySelector('.check-pareja').checked, nombre_pareja: b.querySelector('.input-pareja') ? b.querySelector('.input-pareja').value : "-"
+                    nombre_invitado: nombre, 
+                    rut: darFormatoRut(rutLimpio), 
+                    email: b.querySelector('[name="email"]').value,
+                    telefono: telInput.value, 
+                    dieta: b.querySelector('[name="dieta"]').value,
+                    lleva_pareja: b.querySelector('.check-pareja').checked, 
+                    nombre_pareja: b.querySelector('.input-pareja') ? b.querySelector('.input-pareja').value : "-",
+                    dieta_pareja: b.querySelector('.dieta-pareja') ? b.querySelector('.dieta-pareja').value : "-"
                 });
             }
 

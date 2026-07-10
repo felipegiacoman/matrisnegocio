@@ -92,19 +92,15 @@
         let cuerpoCancelacion = "Hemos procesado tu cancelación.";
         let listaNombresGlobal = [];
 
-        // --- INICIALIZADOR ASÍNCRONO ---
         async function inicializarCancelacion() {
             try {
-                // 1. LEER ARCHIVO MAESTRO
                 const cfgRes = await fetch('config.json');
                 const cfg = await cfgRes.json();
                 
-                // ASIGNAR URL DEL WORKER
                 SCRIPT_URL = cfg.worker_url;
                 asuntoCancelacion = cfg.email_asunto_cancelacion;
                 document.getElementById('cfg-page-title').innerText = "Cancelar Asistencia — " + cfg.nombres_hero.replace(/<[^>]*>?/gm, '');
 
-                // 2. CARGAR NOMBRES PARA EL BUSCADOR (Solo si el config lo entregó)
                 if (SCRIPT_URL) {
                     const dbRes = await fetch(SCRIPT_URL);
                     const data = await dbRes.json();
@@ -114,7 +110,6 @@
                 console.error("Error al cargar configuración", err);
             }
 
-            // 3. LEER EL TXT DEL CORREO
             fetch('cuerpo_cancelacion.txt').then(r => r.text()).then(t => cuerpoCancelacion = t.trim()).catch(e => console.log("Usando cuerpo por defecto."));
         }
 
@@ -169,14 +164,23 @@
                             inputNombre.value = nombre;
                             sugerenciasBox.style.display = 'none';
                             
-                            if (!document.getElementById('emailCancelacion').value && SCRIPT_URL) {
+                            if (SCRIPT_URL) {
                                 try {
                                     const res = await fetch(SCRIPT_URL + "?nombre=" + encodeURIComponent(nombre));
                                     const data = await res.json();
                                     if (data.email) {
-                                        document.getElementById('emailCancelacion').value = data.email;
-                                        document.getElementById('telefonoCancelacion').value = data.telefono;
+                                        if(!document.getElementById('emailCancelacion').value) {
+                                            document.getElementById('emailCancelacion').value = data.email;
+                                            document.getElementById('telefonoCancelacion').value = data.telefono;
+                                        }
                                         contactoSeccion.style.display = 'block';
+
+                                        if (data.lleva_pareja === "Sí" && data.nombre_pareja && data.nombre_pareja !== "-") {
+                                            let aviso = bloque.querySelector('.aviso-pareja-cancela');
+                                            if (!aviso) {
+                                                bloque.insertAdjacentHTML('beforeend', `<div class="aviso-pareja-cancela alert alert-warning p-2 mt-3" style="font-size: 0.75rem;"><i class="bi bi-info-circle me-1"></i>Al confirmar, también se cancelará la asistencia de tu acompañante registrado: <strong>${data.nombre_pareja}</strong>.</div>`);
+                                            }
+                                        }
                                     }
                                 } catch (e) { console.error("Error", e); }
                             }
