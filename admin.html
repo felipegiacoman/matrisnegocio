@@ -5,78 +5,60 @@
     <title>Panel Banquetería - Matrimonio</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body { background: #f4f1ea; font-family: 'Montserrat', sans-serif; }
-        .stat-card { background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); text-align: center; border-top: 4px solid #b59a7a; }
-        .stat-val { font-size: 1.8rem; font-weight: bold; color: #2d2d2d; }
-        .table-container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        body { background: #f8f9fa; font-family: sans-serif; }
+        .card { border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h3 { color: #b59a7a; }
     </style>
 </head>
 <body class="p-4">
     <div class="container">
-        <h2 class="mb-4 text-center">Resumen de Asistencia en Vivo</h2>
+        <h2 class="mb-4">Resumen para Banquetería</h2>
         
-        <!-- Tarjetas de Resumen -->
-        <div class="row g-3 mb-5" id="stats-container">
-            <div class="col-md-3"><div class="stat-card"><h5>Total Personas</h5><div class="stat-val" id="total-val">0</div></div></div>
-            <div class="col-md-3"><div class="stat-card"><h5>Veganos</h5><div class="stat-val" id="veg-val">0</div></div></div>
-            <div class="col-md-3"><div class="stat-card"><h5>Celiacos</h5><div class="stat-val" id="cel-val">0</div></div></div>
-            <div class="col-md-3"><div class="stat-card"><h5>Vegetarianos</h5><div class="stat-val" id="vet-val">0</div></div></div>
+        <div class="row" id="stats-container">
+            <!-- Aquí se cargarán las tarjetas de resumen -->
         </div>
 
-        <!-- Ventana de Visualización Detallada -->
-        <div class="table-container">
-            <h4 class="mb-3">Detalle Completo de Confirmados</h4>
-            <div class="table-responsive">
-                <table class="table table-hover align-middle">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Invitado</th>
-                            <th>Pareja</th>
-                            <th>Restricción Invitado</th>
-                            <th>Restricción Pareja</th>
-                            <th>Fecha</th>
-                        </tr>
-                    </thead>
-                    <tbody id="lista-tabla"></tbody>
-                </table>
-            </div>
+        <div class="card mt-4 p-4">
+            <h4>Detalle de Invitados</h4>
+            <table class="table table-hover mt-3">
+                <thead>
+                    <tr><th>Invitado</th><th>Pareja</th><th>Restricción Invitado</th><th>Restricción Pareja</th></tr>
+                </thead>
+                <tbody id="lista-tabla"></tbody>
+            </table>
         </div>
     </div>
 
     <script>
         async function cargarPanel() {
-            try {
-                const cfg = await (await fetch('config.json')).json();
-                const res = await fetch(cfg.worker_url + "?action=confirmados");
-                const data = await res.json();
+            const cfg = await (await fetch('config.json')).json();
+            // Solicitamos todos los confirmados al Worker
+            const res = await fetch(cfg.worker_url + "?action=confirmados");
+            const data = await res.json();
 
-                let total = 0, dietas = { 'Vegano': 0, 'Celiaco': 0, 'Vegetariano': 0 };
-                let html = "";
+            let totalAdultos = 0, totalNinos = 0, dietas = { 'Ninguna': 0, 'Vegano': 0, 'Vegetariano': 0, 'Celiaco': 0 };
 
-                data.forEach(p => {
-                    // Contar personas (Invitado + Pareja si aplica)
-                    total += 1;
-                    if(p.lleva_pareja === "Sí") total += 1;
+            let html = "";
+            data.forEach(p => {
+                // Sumar dietas
+                if(dietas.hasOwnProperty(p.dieta)) dietas[p.dieta]++;
+                if(p.lleva_pareja === "Sí" && dietas.hasOwnProperty(p.dieta_pareja)) dietas[p.dieta_pareja]++;
 
-                    // Contar restricciones
-                    if(dietas.hasOwnProperty(p.dieta)) dietas[p.dieta]++;
-                    if(p.lleva_pareja === "Sí" && dietas.hasOwnProperty(p.dieta_pareja)) dietas[p.dieta_pareja]++;
+                // Calcular totales (si tienes una forma de identificar niños, aquí se ajusta)
+                totalAdultos++; 
+                if(p.lleva_pareja === "Sí") totalAdultos++;
 
-                    html += `<tr>
-                        <td><strong>${p.nombre_invitado}</strong></td>
-                        <td>${p.nombre_pareja || '-'}</td>
-                        <td><span class="badge bg-secondary">${p.dieta}</span></td>
-                        <td><span class="badge bg-secondary">${p.dieta_pareja || '-'}</span></td>
-                        <td><small class="text-muted">${p.fecha || '-'}</small></td>
-                    </tr>`;
-                });
+                html += `<tr><td>${p.nombre_invitado}</td><td>${p.nombre_pareja}</td><td>${p.dieta}</td><td>${p.dieta_pareja}</td></tr>`;
+            });
 
-                document.getElementById('total-val').innerText = total;
-                document.getElementById('veg-val').innerText = dietas['Vegano'];
-                document.getElementById('cel-val').innerText = dietas['Celiaco'];
-                document.getElementById('vet-val').innerText = dietas['Vegetariano'];
-                document.getElementById('lista-tabla').innerHTML = html;
-            } catch(e) { console.error("Error cargando datos:", e); }
+            // Dibujar tarjetas de resumen
+            document.getElementById('stats-container').innerHTML = `
+                <div class="col-md-3"><div class="card p-3"><h5>Total Personas</h5><h3>${totalAdultos}</h3></div></div>
+                <div class="col-md-3"><div class="card p-3"><h5>Veganos</h5><h3>${dietas['Vegano']}</h3></div></div>
+                <div class="col-md-3"><div class="card p-3"><h5>Vegetarianos</h5><h3>${dietas['Vegetariano']}</h3></div></div>
+                <div class="col-md-3"><div class="card p-3"><h5>Celiacos</h5><h3>${dietas['Celiaco']}</h3></div></div>
+            `;
+            document.getElementById('lista-tabla').innerHTML = html;
         }
         cargarPanel();
     </script>
