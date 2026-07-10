@@ -2,99 +2,107 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel Banquetería - Matrimonio</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body { background: #f4f1ea; font-family: 'Montserrat', sans-serif; }
-        .stat-card { background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); text-align: center; border-top: 4px solid #b59a7a; height: 100%; cursor: pointer; transition: 0.3s; }
-        .stat-card:hover { transform: translateY(-3px); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .stat-card.active-filter { background: #b59a7a; color: white; border-top: 4px solid #2d2d2d; }
-        .stat-card.active-filter h6, .stat-card.active-filter .stat-val { color: white !important; }
-        .stat-val { font-size: 2rem; font-weight: bold; color: #2d2d2d; }
+        .stat-card { background: white; border-radius: 8px; padding: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); text-align: center; border-top: 4px solid #b59a7a; height: 100%; display: flex; flex-direction: column; justify-content: center;}
+        .stat-val { font-size: 1.8rem; font-weight: bold; color: #2d2d2d; }
+        .table-container { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .badge-adulto { background-color: #b59a7a; color: white; }
         .badge-nino { background-color: #8c775e; color: white; }
+        @media (min-width: 768px) {
+            .table-container { padding: 30px; }
+            .stat-card { padding: 20px; }
+            .stat-val { font-size: 2rem; }
+        }
     </style>
 </head>
-<body class="p-4 p-md-5">
-    <div class="container">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2 style="font-family: 'Playfair Display', serif; color: #2d2d2d;">Asistencia y Dietas (En Vivo)</h2>
-            <button class="btn btn-outline-dark btn-sm" onclick="renderTabla('Todas')">Ver Todos</button>
-        </div>
+<body class="p-3 p-md-5">
+    <div class="container-fluid container-md">
+        <h2 class="mb-4 text-center" style="font-family: 'Playfair Display', serif; color: #2d2d2d;">Asistencia y Dietas (En Vivo)</h2>
         
-        <div class="row g-3 mb-5">
+        <div class="row g-2 g-md-3 mb-4" id="stats-container">
             <div class="col-6 col-md-2"><div class="stat-card"><h6>Adultos</h6><div class="stat-val" id="adult-val">0</div></div></div>
             <div class="col-6 col-md-2"><div class="stat-card"><h6>Niños</h6><div class="stat-val" id="nino-val">0</div></div></div>
-            <div class="col-12 col-md-1 d-none d-md-flex align-items-center justify-content-center"><div style="width: 2px; height: 100%; background: #ddd;"></div></div>
-            <div class="col-4 col-md-2"><div class="stat-card" id="card-Vegano" onclick="renderTabla('Vegano')"><h6>Veganos</h6><div class="stat-val" id="veg-val">0</div></div></div>
-            <div class="col-4 col-md-2"><div class="stat-card" id="card-Vegetariano" onclick="renderTabla('Vegetariano')"><h6>Vegetarianos</h6><div class="stat-val" id="vet-val">0</div></div></div>
-            <div class="col-4 col-md-2"><div class="stat-card" id="card-Celiaco" onclick="renderTabla('Celiaco')"><h6>Celiacos</h6><div class="stat-val" id="cel-val">0</div></div></div>
+            
+            <div class="col-12 col-md-1 d-none d-md-flex align-items-center justify-content-center">
+                <div style="width: 2px; height: 100%; background: #ddd;"></div>
+            </div>
+
+            <div class="col-4 col-md-2"><div class="stat-card"><h6 class="small fw-bold">Veganos</h6><div class="stat-val" id="veg-val">0</div></div></div>
+            <div class="col-4 col-md-2"><div class="stat-card"><h6 class="small fw-bold">Vegetar.</h6><div class="stat-val" id="vet-val">0</div></div></div>
+            <div class="col-4 col-md-2"><div class="stat-card"><h6 class="small fw-bold">Celiacos</h6><div class="stat-val" id="cel-val">0</div></div></div>
         </div>
 
-        <div class="bg-white p-4 border-radius-8 shadow-sm">
-            <h4 class="mb-4" id="titulo-tabla" style="font-family: 'Playfair Display', serif;">Listado de Comensales</h4>
+        <div class="table-container">
+            <h4 class="mb-3" style="font-family: 'Playfair Display', serif;">Listado de Comensales</h4>
             <div class="table-responsive">
-                <table class="table table-hover align-middle border">
+                <table class="table table-hover align-middle border text-nowrap">
                     <thead class="table-light">
-                        <tr><th>Nombre del Comensal</th><th>Mesa Asignada</th><th>Restricción</th><th>Tipo de Menú</th></tr>
+                        <tr>
+                            <th>Nombre del Comensal</th>
+                            <th>Restricción Alimentaria</th>
+                            <th>Tipo de Menú</th>
+                        </tr>
                     </thead>
-                    <tbody id="lista-tabla"><tr><td colspan="4" class="text-center">Cargando datos...</td></tr></tbody>
+                    <tbody id="lista-tabla">
+                        <tr><td colspan="3" class="text-center text-muted">Cargando datos desde la base de datos...</td></tr>
+                    </tbody>
                 </table>
             </div>
         </div>
     </div>
 
     <script>
-        let todosLosComensales = [];
-        
         async function cargarPanel() {
-            const cfg = await (await fetch('config.json')).json();
-            const [resConf, resMaestra] = await Promise.all([fetch(cfg.worker_url + "?action=confirmados"), fetch(cfg.worker_url + "?action=lista")]);
-            const confirmados = await resConf.json();
-            const maestra = await resMaestra.json();
+            try {
+                const cfg = await (await fetch('config.json')).json();
+                const [resConf, resMaestra] = await Promise.all([
+                    fetch(cfg.worker_url + "?action=confirmados"),
+                    fetch(cfg.worker_url + "?action=lista")
+                ]);
+                const confirmados = await resConf.json();
+                const maestra = await resMaestra.json();
 
-            let adultos = 0, ninos = 0, dietas = { 'Vegano': 0, 'Vegetariano': 0, 'Celiaco': 0 };
+                let adultos = 0, ninos = 0, dietas = { 'Vegano': 0, 'Vegetariano': 0, 'Celiaco': 0 };
+                let html = "";
 
-            confirmados.forEach(p => {
-                const infoMaestra = maestra.find(m => m.nombre === p.nombre_invitado);
-                const esNino = infoMaestra ? (infoMaestra.nino === 1) : false;
-                const mesaAsignada = p.mesa_numero ? `Mesa ${p.mesa_numero}` : `<span class="text-muted">Por asignar</span>`;
+                confirmados.forEach(p => {
+                    const infoMaestra = maestra.find(m => m.nombre === p.nombre_invitado);
+                    const esNino = infoMaestra ? (infoMaestra.nino === 1) : false;
+                    
+                    if (esNino) ninos++; else adultos++;
+                    if (dietas.hasOwnProperty(p.dieta)) dietas[p.dieta]++;
+
+                    html += `<tr>
+                        <td><strong>${p.nombre_invitado}</strong></td>
+                        <td>${p.dieta || 'Ninguna'}</td>
+                        <td><span class="badge ${esNino ? 'badge-nino' : 'badge-adulto'}">${esNino ? 'Niño' : 'Adulto'}</span></td>
+                    </tr>`;
+
+                    if (p.lleva_pareja === "Sí" && p.nombre_pareja && p.nombre_pareja !== "-" && p.nombre_pareja.toLowerCase() !== "pendiente") {
+                        adultos++;
+                        if (dietas.hasOwnProperty(p.dieta_pareja)) dietas[p.dieta_pareja]++;
+                        html += `<tr>
+                            <td><strong>${p.nombre_pareja}</strong></td>
+                            <td>${p.dieta_pareja || 'Ninguna'}</td>
+                            <td><span class="badge badge-adulto">Adulto</span></td>
+                        </tr>`;
+                    }
+                });
+
+                document.getElementById('adult-val').innerText = adultos;
+                document.getElementById('nino-val').innerText = ninos;
+                document.getElementById('veg-val').innerText = dietas['Vegano'];
+                document.getElementById('vet-val').innerText = dietas['Vegetariano'];
+                document.getElementById('cel-val').innerText = dietas['Celiaco'];
                 
-                if (esNino) ninos++; else adultos++;
-                if (dietas.hasOwnProperty(p.dieta)) dietas[p.dieta]++;
-
-                todosLosComensales.push({ nombre: p.nombre_invitado, mesa: mesaAsignada, dieta: p.dieta || 'Ninguna', esNino: esNino });
-
-                if (p.lleva_pareja === "Sí" && p.nombre_pareja && p.nombre_pareja !== "-" && p.nombre_pareja.toLowerCase() !== "pendiente") {
-                    adultos++;
-                    if (dietas.hasOwnProperty(p.dieta_pareja)) dietas[p.dieta_pareja]++;
-                    todosLosComensales.push({ nombre: p.nombre_pareja, mesa: mesaAsignada, dieta: p.dieta_pareja || 'Ninguna', esNino: false });
-                }
-            });
-
-            document.getElementById('adult-val').innerText = adultos;
-            document.getElementById('nino-val').innerText = ninos;
-            document.getElementById('veg-val').innerText = dietas['Vegano'];
-            document.getElementById('vet-val').innerText = dietas['Vegetariano'];
-            document.getElementById('cel-val').innerText = dietas['Celiaco'];
-            renderTabla('Todas');
-        }
-
-        function renderTabla(filtro) {
-            document.querySelectorAll('.stat-card').forEach(c => c.classList.remove('active-filter'));
-            if(filtro !== 'Todas') document.getElementById('card-'+filtro).classList.add('active-filter');
-            
-            document.getElementById('titulo-tabla').innerText = filtro === 'Todas' ? 'Todos los Comensales' : `Filtro: ${filtro}s`;
-
-            let filtrados = todosLosComensales;
-            if (filtro !== 'Todas') filtrados = todosLosComensales.filter(c => c.dieta === filtro);
-
-            let html = "";
-            filtrados.forEach(c => {
-                html += `<tr><td><strong>${c.nombre}</strong></td><td>${c.mesa}</td><td>${c.dieta}</td><td><span class="badge ${c.esNino ? 'badge-nino' : 'badge-adulto'}">${c.esNino ? 'Niño' : 'Adulto'}</span></td></tr>`;
-            });
-            
-            document.getElementById('lista-tabla').innerHTML = html || `<tr><td colspan="4" class="text-center text-muted">No hay comensales para este filtro.</td></tr>`;
+                document.getElementById('lista-tabla').innerHTML = html || `<tr><td colspan="3" class="text-center text-muted">Aún no hay invitados confirmados.</td></tr>`;
+            } catch(e) { 
+                document.getElementById('lista-tabla').innerHTML = `<tr><td colspan="3" class="text-center text-danger">Error de conexión. Recarga la página.</td></tr>`;
+            }
         }
         cargarPanel();
     </script>
