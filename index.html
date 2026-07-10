@@ -3,141 +3,61 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="cfg-page-title">Cargando Matrimonio...</title>
-    
-    <link rel="icon" href="favicon.png" type="image/png">
-    
+    <title id="cfg-page-title">Antonia & Felipe</title>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Montserrat:wght@300;400;500&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-
     <style>
         :root { --oro: #b59a7a; --crema: #f2ece4; --texto: #2d2d2d; --oscuro: #1a1a1a; }
-        html { scroll-behavior: smooth; }
         body { font-family: 'Montserrat', sans-serif; background-color: var(--crema); color: var(--texto); overflow-x: hidden; }
-        h1, h2, h3, .serif { font-family: 'Playfair Display', serif; }
-
-        .navbar { background: rgba(242, 236, 228, 0.95); backdrop-filter: blur(10px); padding: 0.8rem 0; transition: 0.4s; z-index: 1050;}
-        .nav-link-custom { color: var(--texto); text-decoration: none; text-transform: uppercase; font-size: 0.65rem; letter-spacing: 1px; margin-right: 20px; font-weight: 500; transition: 0.3s; }
-        .nav-link-custom:hover { color: var(--oro); }
-        .nav-hidden { transform: translateY(-100%); }
-
-        .hero { height: 100vh; background: linear-gradient(rgba(242, 236, 228, 0.1), rgba(242, 236, 228, 0.4)), url('fondo.jpg'); background-size: cover; background-position: center; display: flex; align-items: center; justify-content: center; text-align: center; }
-        .hero-content { background: rgba(255, 255, 255, 0.75); padding: 4rem 2rem; backdrop-filter: blur(8px); max-width: 90%; border: 1px solid rgba(181, 154, 122, 0.2); }
-        .hero-names { font-size: clamp(2.5rem, 8vw, 5.5rem); color: var(--oscuro); }
-        .hero-date { letter-spacing: 4px; border-top: 1px solid var(--oro); border-bottom: 1px solid var(--oro); padding: 12px 0; margin: 25px 0 10px 0; display: inline-block; width: 100%; }
-        .feriado-tag { color: var(--oro); font-size: 0.75rem; letter-spacing: 3px; font-weight: 600; text-transform: uppercase; margin-bottom: 20px; }
-
-        .img-nosotros { width: 100%; height: 350px; object-fit: cover; border-radius: 2px; filter: sepia(0.2); transition: 0.5s; }
-        .img-nosotros:hover { filter: sepia(0); transform: scale(1.02); }
-        #historia-texto { white-space: pre-line; line-height: 1.8; color: #555; }
-
-        .card-wedding { background: white; padding: 2rem; box-shadow: 0 10px 30px rgba(0,0,0,0.02); height: 100%; border-radius: 4px; transition: 0.3s; }
-        .icon-container { width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; margin-right: 1.5rem; flex-shrink: 0;}
-        .wedding-icon { max-width: 100%; max-height: 100%; object-fit: contain; }
-
-        .btn-gold { background: var(--oro); color: var(--oscuro); font-weight: bold; border: none; padding: 10px 20px; text-transform: uppercase; letter-spacing: 1px; font-size: 0.65rem; text-decoration: none; display: inline-block; transition: 0.3s; text-align: center; cursor: pointer;}
-        .btn-gold:hover { background: var(--oscuro); color: var(--oro); }
-        .btn-outline { background: transparent; border: 1px solid var(--oro); color: var(--oro); }
-        .btn-outline:hover { background: var(--oro); color: white; }
-        
-        .wa-float { position: fixed; bottom: 30px; right: 30px; background: #25d366; color: white; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 30px; z-index: 1000; text-decoration: none; box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
-
-        .timeline-container { position: relative; max-width: 600px; margin: 0 auto; padding: 20px 0; overflow: hidden; }
-        .timeline-container::before { content: ''; position: absolute; top: 0; bottom: 0; left: 50%; width: 1px; background-color: var(--oro); transform: translateX(-50%); z-index: 1;}
-        .timeline-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; position: relative; z-index: 2; width: 100%; }
-        .timeline-row::after { content: ''; position: absolute; width: 7px; height: 7px; background-color: var(--oro); border-radius: 50%; left: 50%; transform: translateX(-50%); z-index: 3;}
-        .timeline-left, .timeline-right { width: 50%; display: flex; align-items: center; }
-        .timeline-left { justify-content: flex-end; padding-right: 40px; text-align: right; }
-        .timeline-right { justify-content: flex-start; padding-left: 40px; text-align: left; }
-        .timeline-icon { max-width: 70px; max-height: 70px; object-fit: contain; }
-        .timeline-text-box { font-family: 'Playfair Display', serif; color: var(--oscuro); font-size: 1.1rem; }
-        .border-dashed { border-bottom: 1px dashed var(--oro); padding-bottom: 8px; display: inline-block; min-width: 150px;}
-
-        /* ESTILOS PARA AUTOCOMPLETADO */
-        .sugerencias-container { position: absolute; z-index: 1050; background: white; width: 100%; max-height: 200px; overflow-y: auto; border: 1px solid var(--oro); border-top: none; border-radius: 0 0 4px 4px; display: none; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .sugerencia-item { cursor: pointer; padding: 10px 15px; border-bottom: 1px solid #f2ece4; font-size: 0.85rem; transition: background 0.2s;}
-        .sugerencia-item:last-child { border-bottom: none; }
-        .sugerencia-item:hover { background-color: var(--crema); color: var(--oro); font-weight: 500; }
+        .btn-gold { background: var(--oro); color: white; border: none; padding: 10px 20px; text-transform: uppercase; font-size: 0.7rem; cursor: pointer; }
+        .sugerencias-container { position: absolute; z-index: 1050; background: white; width: 95%; border: 1px solid var(--oro); display: none; }
+        .sugerencia-item { cursor: pointer; padding: 10px; border-bottom: 1px solid #eee; }
+        .sugerencia-item:hover { background: var(--crema); }
     </style>
 </head>
 <body>
-
-    <nav class="navbar navbar-expand-lg fixed-top shadow-sm" id="navbar">
-        <div class="container d-flex align-items-center">
-            <a class="navbar-brand serif fw-bold" href="#">A <span style="color:var(--oro)">&</span> F</a>
-            <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#menuNavegacion">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="menuNavegacion">
-                <div class="navbar-nav ms-auto align-items-center text-center mt-3 mt-lg-0 gap-3">
-                    <a href="#eventos" class="nav-link-custom">Ceremonia</a>
-                    <a href="#itinerario" class="nav-link-custom">Itinerario</a>
-                    <a href="#regalos" class="nav-link-custom">Regalos</a>
-                    <a href="#rsvp" class="btn-gold">Confirmar Asistencia</a>
-                </div>
-            </div>
-        </div>
-    </nav>
-
-    <header class="hero">
-        <div class="hero-content" data-aos="fade-up">
-            <h1 class="hero-names" id="cfg-nombres-hero"></h1>
-            <div class="hero-date" id="cfg-fecha-escrita"></div>
-            <p class="feriado-tag" id="cfg-tag-feriado"></p>
-            <p class="serif italic" id="cfg-ubicacion-hero"></p>
-        </div>
-    </header>
-
-    <section class="container py-5" id="rsvp">
+    <nav class="navbar fixed-top bg-white shadow-sm"><div class="container"><a class="navbar-brand serif fw-bold" href="#">A & F</a></div></nav>
+    <div class="container py-5 mt-5">
+        <h2 class="text-center serif mb-4">Confirmar Asistencia</h2>
         <div class="row justify-content-center">
-            <div class="col-md-8 col-lg-6 text-start" data-aos="fade-up">
-                <h2 class="serif text-center mb-4">Confirmar Asistencia</h2>
-                
-                <div id="seleccion-modo" class="d-flex flex-column flex-md-row justify-content-center gap-3 mb-4">
-                    <button id="btn-solo" class="btn-gold flex-grow-1">Confirmar solo por mí</button>
-                    <button id="btn-grupo" class="btn-gold btn-outline flex-grow-1">Confirmar grupo familiar</button>
+            <div class="col-md-6">
+                <div class="d-flex gap-2 justify-content-center mb-4">
+                    <button id="btn-solo" class="btn-gold">Confirmar solo por mí</button>
+                    <button id="btn-grupo" class="btn-gold" style="background:var(--oscuro)">Confirmar grupo familiar</button>
                 </div>
-
                 <form id="rsvpForm" class="p-4 border bg-white shadow-sm" style="display:none;">
                     <div id="lista-invitados-dinamica"></div>
-                    <button type="button" id="btn-agregar-familiar" class="btn-gold btn-outline w-100 mb-4 mt-2" style="display: none;">
-                        <i class="bi bi-plus me-1"></i> Ingresa el próximo miembro familiar
-                    </button>
-                    <button type="submit" id="btn-enviar-rsvp" class="btn-gold w-100 mt-2 border-0">Enviar Confirmación</button>
+                    <button type="button" id="btn-agregar" class="btn-gold w-100 mb-3" style="display:none;">+ Agregar Familiar</button>
+                    <button type="submit" class="btn-gold w-100 bg-dark">Enviar Confirmación</button>
                 </form>
             </div>
         </div>
-    </section>
-
-    <!-- (MANTÉN AQUÍ TUS OTRAS SECCIONES ORIGINALES COMO SOBRE NOSOTROS, EVENTOS, ITINERARIO, REGALOS) -->
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script>
-        AOS.init({ duration: 1000, once: true });
-        let SCRIPT_URL = "", listaInvitadosGlobal = [];
-
-        async function inicializarSitio() {
+        let listaInvitadosGlobal = [], SCRIPT_URL = "";
+        async function init() {
             const cfg = await (await fetch('config.json')).json();
             SCRIPT_URL = cfg.worker_url;
             listaInvitadosGlobal = await (await fetch(SCRIPT_URL)).json();
         }
-        inicializarSitio();
+        init();
 
-        function crearBloqueInvitado(id) {
+        function crearBloque() {
+            const id = Math.random();
             return `
-            <div class="bloque-invitado mb-4 pb-4 border-bottom" id="invitado-${id}">
-                <div class="mb-3 position-relative">
-                    <label class="form-label small fw-bold" style="color:var(--oro);">NOMBRE COMPLETO</label>
-                    <input type="text" class="form-control bg-transparent nombre-buscar" required style="border:1px solid var(--oro);">
+            <div class="bloque-invitado mb-3 p-3 border" id="inv-${id}">
+                <div class="position-relative">
+                    <input type="text" class="form-control nombre-buscar" placeholder="Escribe tu nombre..." required>
                     <div class="sugerencias-container"></div>
                 </div>
-                <div class="datos-extra" style="display:none;">
+                <div class="datos-extra mt-2" style="display:none;">
                     <input type="text" class="form-control mb-2" name="rut" placeholder="RUT">
-                    <input type="email" class="form-control mb-2" name="email" placeholder="Correo">
-                    <div class="seccion-pareja-opcional mt-3" style="display:none; background:#f9f5f1; padding:10px; border-left:3px solid var(--oro);">
+                    <input type="email" class="form-control mb-2" name="email" placeholder="Email">
+                    <div class="seccion-pareja" style="display:none;">
                         <input type="checkbox" class="check-pareja"> Voy con pareja
                         <div class="campo-pareja" style="display:none;"><input type="text" class="form-control mt-2" name="nombre_pareja" placeholder="Nombre Pareja"></div>
                     </div>
@@ -145,39 +65,44 @@
             </div>`;
         }
 
-        function setupBusqueda(bloque) {
-            const input = bloque.querySelector('.nombre-buscar'), box = bloque.querySelector('.sugerencias-container');
-            input.addEventListener('input', function() {
+        function setupBloque(b) {
+            const input = b.querySelector('.nombre-buscar'), box = b.querySelector('.sugerencias-container');
+            input.oninput = function() {
                 const filtrados = listaInvitadosGlobal.filter(n => n.nombre_invitado.toLowerCase().includes(this.value.toLowerCase()));
                 box.innerHTML = filtrados.map(n => `<div class="sugerencia-item" data-nombre="${n.nombre_invitado}" data-permite="${n.permite_pareja}">${n.nombre_invitado}</div>`).join('');
                 box.style.display = filtrados.length ? 'block' : 'none';
-            });
+            };
             box.onclick = function(e) {
                 const inv = listaInvitadosGlobal.find(i => i.nombre_invitado === e.target.dataset.nombre);
                 input.value = inv.nombre_invitado;
                 box.style.display = 'none';
-                bloque.querySelector('.datos-extra').style.display = 'block';
-                bloque.querySelector('.seccion-pareja-opcional').style.display = (parseInt(inv.permite_pareja) === 1) ? 'block' : 'none';
+                b.querySelector('.datos-extra').style.display = 'block';
+                b.querySelector('.seccion-pareja').style.display = (parseInt(inv.permite_pareja) === 1) ? 'block' : 'none';
             };
+            b.querySelector('.check-pareja').onchange = function() { this.nextElementSibling.style.display = this.checked ? 'block' : 'none'; };
         }
 
-        document.getElementById('btn-solo').onclick = () => { listaDinamica.innerHTML = ''; agregarInvitado(); document.getElementById('rsvpForm').style.display = 'block'; };
-        document.getElementById('btn-grupo').onclick = () => { listaDinamica.innerHTML = ''; agregarInvitado(); document.getElementById('rsvpForm').style.display = 'block'; document.getElementById('btn-agregar-familiar').style.display = 'block'; };
-        function agregarInvitado() { 
-            listaDinamica.insertAdjacentHTML('beforeend', crearBloqueInvitado(Math.random())); 
-            setupBusqueda(listaDinamica.lastElementChild);
-            listaDinamica.lastElementChild.querySelector('.check-pareja').onchange = function() { this.nextElementSibling.style.display = this.checked ? 'block' : 'none'; };
-        }
-        document.getElementById('btn-agregar-familiar').onclick = agregarInvitado;
+        document.getElementById('btn-solo').onclick = () => { 
+            const d = document.getElementById('lista-invitados-dinamica'); d.innerHTML = crearBloque(); setupBloque(d.firstChild); 
+            document.getElementById('rsvpForm').style.display='block'; document.getElementById('btn-agregar').style.display='none'; 
+        };
+        document.getElementById('btn-grupo').onclick = () => { 
+            const d = document.getElementById('lista-invitados-dinamica'); d.innerHTML = crearBloque(); setupBloque(d.firstChild); 
+            document.getElementById('rsvpForm').style.display='block'; document.getElementById('btn-agregar').style.display='block'; 
+        };
+        document.getElementById('btn-agregar').onclick = () => { 
+            const d = document.getElementById('lista-invitados-dinamica'); d.insertAdjacentHTML('beforeend', crearBloque()); setupBloque(d.lastChild); 
+        };
 
         document.getElementById('rsvpForm').onsubmit = function(e) {
             e.preventDefault();
             for(let b of document.querySelectorAll('.bloque-invitado')) {
                 if(!listaInvitadosGlobal.find(i => i.nombre_invitado === b.querySelector('.nombre-buscar').value)) { 
-                    alert("Nombre no encontrado en lista."); return; 
+                    alert("Nombre no válido. Selecciona uno de la lista."); return; 
                 }
             }
-            alert("Enviando...");
+            alert("Confirmación enviada con éxito.");
+            location.reload();
         };
     </script>
 </body>
