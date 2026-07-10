@@ -8,6 +8,7 @@
     <style>
         body { background: #f4f1ea; font-family: 'Montserrat', sans-serif; }
         .mesa-card { background: white; border-radius: 8px; border-top: 4px solid #b59a7a; padding: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .mesa-novios { border-top: 4px solid #d4af37; background: #fffcf5; } /* Estilo especial mesa novios */
         .guest-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #eee; font-size: 0.9rem; }
         .guest-item:last-child { border-bottom: none; }
         .btn-gold { background: #b59a7a; color: white; border: none; }
@@ -19,6 +20,7 @@
         <h2 class="mb-4" style="font-family: 'Playfair Display', serif;">Gestor de Mesas (Novios)</h2>
         
         <div class="row">
+            <!-- PANEL IZQUIERDO: COMENSALES SIN ASIGNAR -->
             <div class="col-md-3">
                 <div class="bg-white p-3 rounded shadow-sm">
                     <h5 class="mb-3">Por Asignar (<span id="count-sin-asignar">0</span>)</h5>
@@ -28,17 +30,27 @@
                 </div>
             </div>
 
+            <!-- PANEL DERECHO: MESAS -->
             <div class="col-md-9">
-                <div class="d-flex gap-3 mb-4 bg-white p-3 rounded shadow-sm align-items-end">
-                    <div><label class="small fw-bold">Nº Mesa</label><input type="number" id="nueva-mesa-num" class="form-control form-control-sm"></div>
-                    <div><label class="small fw-bold">Capacidad</label>
-                        <select id="nueva-mesa-cap" class="form-select form-select-sm"><option value="10">10 personas</option><option value="8">8 personas</option></select>
+                <div class="d-flex flex-wrap gap-3 mb-4 bg-white p-3 rounded shadow-sm align-items-end">
+                    <div>
+                        <label class="small fw-bold">Nº Mesa (Ej: 0 para Novios)</label>
+                        <input type="number" id="nueva-mesa-num" class="form-control form-control-sm" style="width: 150px;">
+                    </div>
+                    <div>
+                        <label class="small fw-bold">Capacidad</label>
+                        <select id="nueva-mesa-cap" class="form-select form-select-sm">
+                            <option value="10">10 personas</option>
+                            <option value="8">8 personas</option>
+                            <option value="999">Mesa Novios (Sin límite)</option>
+                        </select>
                     </div>
                     <button class="btn btn-gold btn-sm" onclick="crearMesa()">Crear / Actualizar Mesa</button>
                 </div>
                 
                 <div class="row" id="contenedor-mesas">
-                    </div>
+                    <!-- Las mesas se dibujan aquí -->
+                </div>
             </div>
         </div>
     </div>
@@ -62,7 +74,7 @@
         }
 
         function calcularSillasOcupadas(invitado) {
-            return (invitado.lleva_pareja === "Sí" && invitado.nombre_pareja && invitado.nombre_pareja !== "-") ? 2 : 1;
+            return (invitado.lleva_pareja === "Sí" && invitado.nombre_pareja && invitado.nombre_pareja !== "-" && invitado.nombre_pareja.toLowerCase() !== "pendiente") ? 2 : 1;
         }
 
         function dibujarInterfaz() {
@@ -97,9 +109,15 @@
                     </div>`;
                 });
 
-                const llena = sillasOcupadas >= mesa.capacidad;
+                const esMesaNovios = parseInt(mesa.capacidad) === 999;
+                const llena = !esMesaNovios && (sillasOcupadas >= mesa.capacidad);
+                
+                let tituloMesa = esMesaNovios ? `Mesa Novios (Nº ${mesa.numero})` : `Mesa ${mesa.numero}`;
+                let badgeHtml = esMesaNovios 
+                    ? `<span class="badge bg-info text-dark">${sillasOcupadas} en mesa</span>`
+                    : `<span class="badge ${llena ? 'bg-danger' : 'bg-success'}">${sillasOcupadas} / ${mesa.capacidad}</span>`;
 
-                // Armar dropdown de sin asignar para esta mesa
+                // Armar dropdown de sin asignar
                 let opcionesSinAsignar = `<option value="">+ Agregar invitado...</option>`;
                 sinAsignar.forEach(c => {
                     opcionesSinAsignar += `<option value="${c.nombre_invitado}">${c.nombre_invitado} (${calcularSillasOcupadas(c)} sillas)</option>`;
@@ -107,12 +125,14 @@
 
                 htmlMesas += `
                 <div class="col-md-4">
-                    <div class="mesa-card">
+                    <div class="mesa-card ${esMesaNovios ? 'mesa-novios' : ''}">
                         <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h5 class="m-0">Mesa ${mesa.numero}</h5>
-                            <span class="badge ${llena ? 'bg-danger' : 'bg-success'}">${sillasOcupadas} / ${mesa.capacidad}</span>
+                            <h6 class="m-0 fw-bold">${tituloMesa}</h6>
+                            ${badgeHtml}
                         </div>
-                        <div class="mb-3" style="min-height: 100px;">${htmlOcupantes || '<span class="text-muted small">Mesa vacía</span>'}</div>
+                        <div class="mb-3" style="min-height: 100px; max-height: 250px; overflow-y: auto;">
+                            ${htmlOcupantes || '<span class="text-muted small">Mesa vacía</span>'}
+                        </div>
                         <select class="form-select form-select-sm" onchange="intentarAsignar(this.value, ${mesa.numero}, ${mesa.capacidad}, ${sillasOcupadas})">
                             ${opcionesSinAsignar}
                         </select>
@@ -125,7 +145,7 @@
         async function crearMesa() {
             const num = document.getElementById('nueva-mesa-num').value;
             const cap = document.getElementById('nueva-mesa-cap').value;
-            if(!num) return;
+            if(num === "") return alert("Por favor ingresa un número de mesa.");
             await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ tipo: "guardar_mesa", numero: num, capacidad: cap }) });
             document.getElementById('nueva-mesa-num').value = '';
             recargarDatos();
@@ -136,9 +156,10 @@
             const invitado = dataConfirmados.find(c => c.nombre_invitado === nombreInvitado);
             const sillasRequeridas = calcularSillasOcupadas(invitado);
             
-            if(capActual + sillasRequeridas > capMax) {
+            // Si NO es mesa de novios (999) y sobrepasa la capacidad, lanza alerta
+            if(parseInt(capMax) !== 999 && (capActual + sillasRequeridas > capMax)) {
                 alert(`¡Atención! Esta persona requiere ${sillasRequeridas} sillas, pero a la Mesa ${mesaNum} solo le quedan ${capMax - capActual} cupos libres.`);
-                recargarDatos(); // Resetea el select
+                recargarDatos(); 
                 return;
             }
             asignarMesa(nombreInvitado, mesaNum);
