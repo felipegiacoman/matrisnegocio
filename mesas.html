@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Organizador de Mesas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        body { background: #f4f1ea; font-family: 'Montserrat', sans-serif; }
+        .mesa-card { background: white; border-radius: 8px; border-top: 4px solid #b59a7a; padding: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .guest-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #eee; font-size: 0.9rem; }
+        .guest-item:last-child { border-bottom: none; }
+        .btn-gold { background: #b59a7a; color: white; border: none; }
+        .btn-gold:hover { background: #2d2d2d; color: white; }
+    </style>
+</head>
+<body class="p-4">
+    <div class="container-fluid">
+        <h2 class="mb-4" style="font-family: 'Playfair Display', serif;">Gestor de Mesas (Novios)</h2>
+        
+        <div class="row">
+            <div class="col-md-3">
+                <div class="bg-white p-3 rounded shadow-sm">
+                    <h5 class="mb-3">Por Asignar (<span id="count-sin-asignar">0</span>)</h5>
+                    <div id="lista-sin-asignar" style="max-height: 70vh; overflow-y: auto;">
+                        Cargando...
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-9">
+                <div class="d-flex gap-3 mb-4 bg-white p-3 rounded shadow-sm align-items-end">
+                    <div><label class="small fw-bold">Nº Mesa</label><input type="number" id="nueva-mesa-num" class="form-control form-control-sm"></div>
+                    <div><label class="small fw-bold">Capacidad</label>
+                        <select id="nueva-mesa-cap" class="form-select form-select-sm"><option value="10">10 personas</option><option value="8">8 personas</option></select>
+                    </div>
+                    <button class="btn btn-gold btn-sm" onclick="crearMesa()">Crear / Actualizar Mesa</button>
+                </div>
+                
+                <div class="row" id="contenedor-mesas">
+                    </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let SCRIPT_URL = "";
+        let dataConfirmados = [];
+        let dataMesas = [];
+
+        async function init() {
+            const cfg = await (await fetch('config.json')).json();
+            SCRIPT_URL = cfg.worker_url;
+            await recargarDatos();
+        }
+
+        async function recargarDatos() {
+            const [resConf, resMesas] = await Promise.all([fetch(SCRIPT_URL + "?action=confirmados"), fetch(SCRIPT_URL + "?action=mesas")]);
+            dataConfirmados = await resConf.json();
+            dataMesas = await resMesas.json();
+            dibujarInterfaz();
+        }
+
+        function calcularSillasOcupadas(invitado) {
+            return (invitado.lleva_pareja === "Sí" && invitado.nombre_pareja && invitado.nombre_pareja !== "-") ? 2 : 1;
+        }
+
+        function dibujarInterfaz() {
+            // 1. Dibujar Sin Asignar
+            const sinAsignar = dataConfirmados.filter(c => !c.mesa_numero);
+            let totalSinAsignarSillas = 0;
+            let htmlSinAsignar = "";
+            
+            sinAsignar.forEach(c => {
+                const sillas = calcularSillasOcupadas(c);
+                totalSinAsignarSillas += sillas;
+                htmlSinAsignar += `<div class="guest-item">
+                    <div><strong>${c.nombre_invitado}</strong> ${sillas === 2 ? '<span class="badge bg-secondary">+ Pareja</span>' : ''}</div>
+                </div>`;
+            });
+            document.getElementById('count-sin-asignar').innerText = totalSinAsignarSillas;
+            document.getElementById('lista-sin-asignar').innerHTML = htmlSinAsignar || "<p class='text-muted small'>Todos tienen mesa asignada.</p>";
+
+            // 2. Dibujar Mesas
+            let htmlMesas = "";
+            dataMesas.forEach(mesa => {
+                const ocupantes = dataConfirmados.filter(c => parseInt(c.mesa_numero) === parseInt(mesa.numero));
+                let sillasOcupadas = 0;
+                let htmlOcupantes = "";
+                
+                ocupantes.forEach(c => {
+                    const sillas = calcularSillasOcupadas(c);
+                    sillasOcupadas += sillas;
+                    htmlOcupantes += `<div class="guest-item">
+                        <span>${c.nombre_invitado} ${sillas === 2 ? '(+1)' : ''}</span>
+                        <button class="btn btn-sm text-danger p-0 m-0" onclick="asignarMesa('${c.nombre_invitado}', null)"><i class="bi bi-x-circle"></i></button>
+                    </div>`;
+                });
+
+                const llena = sillasOcupadas >= mesa.capacidad;
+
+                // Armar dropdown de sin asignar para esta mesa
+                let opcionesSinAsignar = `<option value="">+ Agregar invitado...</option>`;
+                sinAsignar.forEach(c => {
+                    opcionesSinAsignar += `<option value="${c.nombre_invitado}">${c.nombre_invitado} (${calcularSillasOcupadas(c)} sillas)</option>`;
+                });
+
+                htmlMesas += `
+                <div class="col-md-4">
+                    <div class="mesa-card">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="m-0">Mesa ${mesa.numero}</h5>
+                            <span class="badge ${llena ? 'bg-danger' : 'bg-success'}">${sillasOcupadas} / ${mesa.capacidad}</span>
+                        </div>
+                        <div class="mb-3" style="min-height: 100px;">${htmlOcupantes || '<span class="text-muted small">Mesa vacía</span>'}</div>
+                        <select class="form-select form-select-sm" onchange="intentarAsignar(this.value, ${mesa.numero}, ${mesa.capacidad}, ${sillasOcupadas})">
+                            ${opcionesSinAsignar}
+                        </select>
+                    </div>
+                </div>`;
+            });
+            document.getElementById('contenedor-mesas').innerHTML = htmlMesas;
+        }
+
+        async function crearMesa() {
+            const num = document.getElementById('nueva-mesa-num').value;
+            const cap = document.getElementById('nueva-mesa-cap').value;
+            if(!num) return;
+            await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ tipo: "guardar_mesa", numero: num, capacidad: cap }) });
+            document.getElementById('nueva-mesa-num').value = '';
+            recargarDatos();
+        }
+
+        function intentarAsignar(nombreInvitado, mesaNum, capMax, capActual) {
+            if(!nombreInvitado) return;
+            const invitado = dataConfirmados.find(c => c.nombre_invitado === nombreInvitado);
+            const sillasRequeridas = calcularSillasOcupadas(invitado);
+            
+            if(capActual + sillasRequeridas > capMax) {
+                alert(`¡Atención! Esta persona requiere ${sillasRequeridas} sillas, pero a la Mesa ${mesaNum} solo le quedan ${capMax - capActual} cupos libres.`);
+                recargarDatos(); // Resetea el select
+                return;
+            }
+            asignarMesa(nombreInvitado, mesaNum);
+        }
+
+        async function asignarMesa(nombre, mesaNum) {
+            await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ tipo: "asignar_mesa", nombre_invitado: nombre, mesa_numero: mesaNum }) });
+            recargarDatos();
+        }
+
+        init();
+    </script>
+</body>
+</html>
