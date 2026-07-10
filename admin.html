@@ -2,43 +2,83 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Panel de Administración — Matrimonio</title>
+    <title>Panel Banquetería - Matrimonio</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #f4f1ea; font-family: 'Montserrat', sans-serif; }
+        .stat-card { background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); text-align: center; border-top: 4px solid #b59a7a; }
+        .stat-val { font-size: 1.8rem; font-weight: bold; color: #2d2d2d; }
+        .table-container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+    </style>
 </head>
-<body class="bg-light p-4">
+<body class="p-4">
     <div class="container">
-        <h2 class="mb-4">Panel de Invitados Confirmados</h2>
-        <div class="row" id="stats"></div>
-        <div class="mt-4 p-3 bg-white shadow-sm">
-            <table class="table">
-                <thead><tr><th>Invitado</th><th>Pareja</th><th>Dieta Invitado</th><th>Dieta Pareja</th></tr></thead>
-                <tbody id="lista-invitados"></tbody>
-            </table>
+        <h2 class="mb-4 text-center">Resumen de Asistencia en Vivo</h2>
+        
+        <!-- Tarjetas de Resumen -->
+        <div class="row g-3 mb-5" id="stats-container">
+            <div class="col-md-3"><div class="stat-card"><h5>Total Personas</h5><div class="stat-val" id="total-val">0</div></div></div>
+            <div class="col-md-3"><div class="stat-card"><h5>Veganos</h5><div class="stat-val" id="veg-val">0</div></div></div>
+            <div class="col-md-3"><div class="stat-card"><h5>Celiacos</h5><div class="stat-val" id="cel-val">0</div></div></div>
+            <div class="col-md-3"><div class="stat-card"><h5>Vegetarianos</h5><div class="stat-val" id="vet-val">0</div></div></div>
+        </div>
+
+        <!-- Ventana de Visualización Detallada -->
+        <div class="table-container">
+            <h4 class="mb-3">Detalle Completo de Confirmados</h4>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Invitado</th>
+                            <th>Pareja</th>
+                            <th>Restricción Invitado</th>
+                            <th>Restricción Pareja</th>
+                            <th>Fecha</th>
+                        </tr>
+                    </thead>
+                    <tbody id="lista-tabla"></tbody>
+                </table>
+            </div>
         </div>
     </div>
 
     <script>
-        async function loadAdmin() {
-            const cfg = await (await fetch('config.json')).json();
-            const res = await fetch(cfg.worker_url + "?all=true"); // Asegúrate que tu worker soporte traer todos los confirmados
-            const data = await res.json();
-            
-            let total = 0, diets = { 'Ninguna': 0, 'Vegano': 0, 'Vegetariano': 0, 'Celiaco': 0 };
-            let html = "";
+        async function cargarPanel() {
+            try {
+                const cfg = await (await fetch('config.json')).json();
+                const res = await fetch(cfg.worker_url + "?action=confirmados");
+                const data = await res.json();
 
-            data.forEach(i => {
-                total += 1 + (i.lleva_pareja === "Sí" ? 1 : 0);
-                diets[i.dieta] = (diets[i.dieta] || 0) + 1;
-                if(i.lleva_pareja === "Sí") diets[i.dieta_pareja] = (diets[i.dieta_pareja] || 0) + 1;
-                
-                html += `<tr><td>${i.nombre_invitado}</td><td>${i.nombre_pareja}</td><td>${i.dieta}</td><td>${i.dieta_pareja}</td></tr>`;
-            });
+                let total = 0, dietas = { 'Vegano': 0, 'Celiaco': 0, 'Vegetariano': 0 };
+                let html = "";
 
-            document.getElementById('stats').innerHTML = `<div class="col-md-3"><h5>Total Personas</h5><h2>${total}</h2></div>` + 
-                Object.keys(diets).map(d => `<div class="col-md-2"><h5>${d}</h5><h2>${diets[d]}</h2></div>`).join('');
-            document.getElementById('lista-invitados').innerHTML = html;
+                data.forEach(p => {
+                    // Contar personas (Invitado + Pareja si aplica)
+                    total += 1;
+                    if(p.lleva_pareja === "Sí") total += 1;
+
+                    // Contar restricciones
+                    if(dietas.hasOwnProperty(p.dieta)) dietas[p.dieta]++;
+                    if(p.lleva_pareja === "Sí" && dietas.hasOwnProperty(p.dieta_pareja)) dietas[p.dieta_pareja]++;
+
+                    html += `<tr>
+                        <td><strong>${p.nombre_invitado}</strong></td>
+                        <td>${p.nombre_pareja || '-'}</td>
+                        <td><span class="badge bg-secondary">${p.dieta}</span></td>
+                        <td><span class="badge bg-secondary">${p.dieta_pareja || '-'}</span></td>
+                        <td><small class="text-muted">${p.fecha || '-'}</small></td>
+                    </tr>`;
+                });
+
+                document.getElementById('total-val').innerText = total;
+                document.getElementById('veg-val').innerText = dietas['Vegano'];
+                document.getElementById('cel-val').innerText = dietas['Celiaco'];
+                document.getElementById('vet-val').innerText = dietas['Vegetariano'];
+                document.getElementById('lista-tabla').innerHTML = html;
+            } catch(e) { console.error("Error cargando datos:", e); }
         }
-        loadAdmin();
+        cargarPanel();
     </script>
 </body>
 </html>
