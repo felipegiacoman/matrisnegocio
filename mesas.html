@@ -7,12 +7,15 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
         body { background: #f4f1ea; font-family: 'Montserrat', sans-serif; }
-        .mesa-card { background: white; border-radius: 8px; border-top: 4px solid #b59a7a; padding: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        .mesa-novios { border-top: 4px solid #d4af37; background: #fffcf5; } /* Estilo especial mesa novios */
+        .mesa-card { background: white; border-radius: 8px; border-top: 4px solid #b59a7a; padding: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; transition: 0.2s;}
+        .mesa-novios { border-top: 4px solid #d4af37; background: #fffcf5; }
         .guest-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #eee; font-size: 0.9rem; }
         .guest-item:last-child { border-bottom: none; }
         .btn-gold { background: #b59a7a; color: white; border: none; }
         .btn-gold:hover { background: #2d2d2d; color: white; }
+        .action-icon { cursor: pointer; color: #888; transition: 0.2s; font-size: 1.1rem;}
+        .action-icon:hover { color: #2d2d2d; }
+        .trash-icon:hover { color: #dc3545; }
     </style>
 </head>
 <body class="p-4">
@@ -24,9 +27,7 @@
             <div class="col-md-3">
                 <div class="bg-white p-3 rounded shadow-sm">
                     <h5 class="mb-3">Por Asignar (<span id="count-sin-asignar">0</span>)</h5>
-                    <div id="lista-sin-asignar" style="max-height: 70vh; overflow-y: auto;">
-                        Cargando...
-                    </div>
+                    <div id="lista-sin-asignar" style="max-height: 70vh; overflow-y: auto;">Cargando...</div>
                 </div>
             </div>
 
@@ -34,23 +35,20 @@
             <div class="col-md-9">
                 <div class="d-flex flex-wrap gap-3 mb-4 bg-white p-3 rounded shadow-sm align-items-end">
                     <div>
-                        <label class="small fw-bold">Nº Mesa (Ej: 0 para Novios)</label>
-                        <input type="number" id="nueva-mesa-num" class="form-control form-control-sm" style="width: 150px;">
-                    </div>
-                    <div>
-                        <label class="small fw-bold">Capacidad</label>
+                        <label class="small fw-bold">Capacidad nueva mesa</label>
                         <select id="nueva-mesa-cap" class="form-select form-select-sm">
                             <option value="10">10 personas</option>
                             <option value="8">8 personas</option>
-                            <option value="999">Mesa Novios (Sin límite)</option>
                         </select>
                     </div>
-                    <button class="btn btn-gold btn-sm" onclick="crearMesa()">Crear / Actualizar Mesa</button>
+                    <button class="btn btn-gold btn-sm" onclick="crearMesaNormal()">+ Agregar Mesa</button>
+                    
+                    <div class="ms-auto border-start ps-3">
+                        <button class="btn btn-outline-dark btn-sm" onclick="crearMesaNovios()"><i class="bi bi-star-fill text-warning me-1"></i>Crear Mesa Novios</button>
+                    </div>
                 </div>
                 
-                <div class="row" id="contenedor-mesas">
-                    <!-- Las mesas se dibujan aquí -->
-                </div>
+                <div class="row" id="contenedor-mesas"></div>
             </div>
         </div>
     </div>
@@ -78,8 +76,8 @@
         }
 
         function dibujarInterfaz() {
-            // 1. Dibujar Sin Asignar
-            const sinAsignar = dataConfirmados.filter(c => !c.mesa_numero);
+            // Arreglo del bug del "0": Ahora valida estrictamente nulos o vacíos
+            const sinAsignar = dataConfirmados.filter(c => c.mesa_numero === null || c.mesa_numero === "");
             let totalSinAsignarSillas = 0;
             let htmlSinAsignar = "";
             
@@ -93,10 +91,10 @@
             document.getElementById('count-sin-asignar').innerText = totalSinAsignarSillas;
             document.getElementById('lista-sin-asignar').innerHTML = htmlSinAsignar || "<p class='text-muted small'>Todos tienen mesa asignada.</p>";
 
-            // 2. Dibujar Mesas
             let htmlMesas = "";
             dataMesas.forEach(mesa => {
-                const ocupantes = dataConfirmados.filter(c => parseInt(c.mesa_numero) === parseInt(mesa.numero));
+                // Validación estricta para asegurar que el "0" no se escape
+                const ocupantes = dataConfirmados.filter(c => c.mesa_numero !== null && c.mesa_numero !== "" && parseInt(c.mesa_numero) === parseInt(mesa.numero));
                 let sillasOcupadas = 0;
                 let htmlOcupantes = "";
                 
@@ -112,12 +110,10 @@
                 const esMesaNovios = parseInt(mesa.capacidad) === 999;
                 const llena = !esMesaNovios && (sillasOcupadas >= mesa.capacidad);
                 
-                let tituloMesa = esMesaNovios ? `Mesa Novios (Nº ${mesa.numero})` : `Mesa ${mesa.numero}`;
                 let badgeHtml = esMesaNovios 
                     ? `<span class="badge bg-info text-dark">${sillasOcupadas} en mesa</span>`
                     : `<span class="badge ${llena ? 'bg-danger' : 'bg-success'}">${sillasOcupadas} / ${mesa.capacidad}</span>`;
 
-                // Armar dropdown de sin asignar
                 let opcionesSinAsignar = `<option value="">+ Agregar invitado...</option>`;
                 sinAsignar.forEach(c => {
                     opcionesSinAsignar += `<option value="${c.nombre_invitado}">${c.nombre_invitado} (${calcularSillasOcupadas(c)} sillas)</option>`;
@@ -127,7 +123,11 @@
                 <div class="col-md-4">
                     <div class="mesa-card ${esMesaNovios ? 'mesa-novios' : ''}">
                         <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h6 class="m-0 fw-bold">${tituloMesa}</h6>
+                            <div class="d-flex align-items-center gap-2">
+                                <h6 class="m-0 fw-bold">${esMesaNovios ? 'Mesa Novios (0)' : `Mesa ${mesa.numero}`}</h6>
+                                ${!esMesaNovios ? `<i class="bi bi-pencil-square action-icon" title="Cambiar Número" onclick="cambiarNumero(${mesa.numero})"></i>` : ''}
+                                <i class="bi bi-trash action-icon trash-icon" title="Eliminar Mesa" onclick="eliminarMesa(${mesa.numero})"></i>
+                            </div>
                             ${badgeHtml}
                         </div>
                         <div class="mb-3" style="min-height: 100px; max-height: 250px; overflow-y: auto;">
@@ -142,32 +142,84 @@
             document.getElementById('contenedor-mesas').innerHTML = htmlMesas;
         }
 
-        async function crearMesa() {
-            const num = document.getElementById('nueva-mesa-num').value;
+        // LÓGICA DE NÚMEROS INTELIGENTES
+        function obtenerSiguienteNumero() {
+            const numeros = dataMesas.map(m => parseInt(m.numero)).filter(n => n > 0).sort((a,b) => a-b);
+            let proximo = 1;
+            for (let i = 0; i < numeros.length; i++) {
+                if (numeros[i] === proximo) proximo++;
+                else break; // Encontró un hueco
+            }
+            return proximo;
+        }
+
+        async function crearMesaNormal() {
             const cap = document.getElementById('nueva-mesa-cap').value;
-            if(num === "") return alert("Por favor ingresa un número de mesa.");
+            const num = obtenerSiguienteNumero();
+            await crearMesa(num, cap);
+        }
+
+        async function crearMesaNovios() {
+            if(dataMesas.some(m => parseInt(m.numero) === 0)) return alert("La Mesa de Novios ya existe.");
+            await crearMesa(0, 999);
+        }
+
+        async function crearMesa(num, cap) {
+            // Actualización optimista local
+            dataMesas.push({ numero: num, capacidad: cap });
+            dibujarInterfaz(); 
             await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ tipo: "guardar_mesa", numero: num, capacidad: cap }) });
-            document.getElementById('nueva-mesa-num').value = '';
             recargarDatos();
+        }
+
+        async function eliminarMesa(num) {
+            if(!confirm(`¿Estás seguro de eliminar la Mesa ${num}? Los invitados volverán a la lista de "Por Asignar".`)) return;
+            // Actualización optimista
+            dataMesas = dataMesas.filter(m => parseInt(m.numero) !== parseInt(num));
+            dataConfirmados.forEach(c => { if(parseInt(c.mesa_numero) === parseInt(num)) c.mesa_numero = null; });
+            dibujarInterfaz();
+
+            await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ tipo: "eliminar_mesa", numero: num }) });
+        }
+
+        async function cambiarNumero(viejoNum) {
+            const nuevoNum = prompt(`Cambiar Mesa ${viejoNum} al número:`);
+            if(!nuevoNum || isNaN(nuevoNum) || parseInt(nuevoNum) === parseInt(viejoNum)) return;
+            
+            if(dataMesas.some(m => parseInt(m.numero) === parseInt(nuevoNum))) return alert("Ese número de mesa ya está en uso.");
+
+            // Actualización optimista
+            const mesa = dataMesas.find(m => parseInt(m.numero) === parseInt(viejoNum));
+            if(mesa) mesa.numero = nuevoNum;
+            dataConfirmados.forEach(c => { if(parseInt(c.mesa_numero) === parseInt(viejoNum)) c.mesa_numero = nuevoNum; });
+            dibujarInterfaz();
+
+            const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ tipo: "cambiar_numero_mesa", viejo_numero: viejoNum, nuevo_numero: nuevoNum }) });
+            const data = await res.json();
+            if(data.error) { alert(data.error); recargarDatos(); }
         }
 
         function intentarAsignar(nombreInvitado, mesaNum, capMax, capActual) {
             if(!nombreInvitado) return;
             const invitado = dataConfirmados.find(c => c.nombre_invitado === nombreInvitado);
-            const sillasRequeridas = calcularSillasOcupadas(invitado);
+            const sillas = calcularSillasOcupadas(invitado);
             
-            // Si NO es mesa de novios (999) y sobrepasa la capacidad, lanza alerta
-            if(parseInt(capMax) !== 999 && (capActual + sillasRequeridas > capMax)) {
-                alert(`¡Atención! Esta persona requiere ${sillasRequeridas} sillas, pero a la Mesa ${mesaNum} solo le quedan ${capMax - capActual} cupos libres.`);
-                recargarDatos(); 
+            if(parseInt(capMax) !== 999 && (capActual + sillas > capMax)) {
+                alert(`¡Atención! Faltan sillas. Esta persona ocupa ${sillas} lugares y solo quedan ${capMax - capActual} disponibles.`);
+                dibujarInterfaz(); // Resetea el desplegable
                 return;
             }
             asignarMesa(nombreInvitado, mesaNum);
         }
 
         async function asignarMesa(nombre, mesaNum) {
+            // INTERFAZ OPTIMISTA: Modifica los datos localmente al instante y dibuja sin esperar a la Base de Datos
+            const invitado = dataConfirmados.find(c => c.nombre_invitado === nombre);
+            if(invitado) invitado.mesa_numero = mesaNum;
+            dibujarInterfaz();
+
+            // Envía a la base de datos en segundo plano
             await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ tipo: "asignar_mesa", nombre_invitado: nombre, mesa_numero: mesaNum }) });
-            recargarDatos();
         }
 
         init();
