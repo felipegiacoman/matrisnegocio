@@ -285,6 +285,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    
     <script>
         AOS.init({ duration: 1000, once: true });
 
@@ -292,7 +293,7 @@
         let asuntoRSVP = "";
         let cuerpoRSVP = "";
         let targetContador = null;
-        let listaInvitadosGlobal = []; // Guarda objetos: {nombre_invitado: 'Juan', permite_pareja: 1}
+        let listaInvitadosGlobal = [];
 
         async function inicializarSitio() {
             try {
@@ -331,9 +332,8 @@
                 asuntoRSVP = cfg.email_asunto_rsvp;
                 targetContador = cfg.fecha_contador;
 
-                // Cargar invitados de la Base de Datos al arreglo global
                 if (SCRIPT_URL) {
-                    const dbRes = await fetch(SCRIPT_URL);
+                    const dbRes = await fetch(SCRIPT_URL + "?action=lista");
                     listaInvitadosGlobal = await dbRes.json();
                 }
             } catch (error) {
@@ -373,7 +373,7 @@
                 ${id > 1 ? `<div class="d-flex justify-content-between mb-3"><h5 class="serif m-0" style="color:var(--oro);">Familiar #${id}</h5><button type="button" class="btn-close" onclick="document.getElementById('invitado-${id}').remove()"></button></div>` : ''}
                 <div class="mb-3 position-relative">
                     <label class="form-label small fw-bold" style="color:var(--oro);">NOMBRE COMPLETO</label>
-                    <input type="text" class="form-control bg-transparent nombre-buscar" name="nombre" autocomplete="off" placeholder="Escribe para buscar tu nombre..." required style="border:1px solid var(--oro);">
+                    <input type="text" class="form-control bg-transparent nombre-buscar" name="nombre" autocomplete=\"off\" placeholder="Escribe para buscar tu nombre..." required style="border:1px solid var(--oro);">
                     <div class="sugerencias-container"></div>
                 </div>
                 <div class="datos-extra" style="display:none;">
@@ -391,221 +391,13 @@
                             <option value="Celiaco">Celiaco</option>
                         </select>
                     </div>
-                    <div class="seccion-pareja-opcional mt-4" style="display:none; background: rgba(181, 154, 122, 0.05); padding: 15px; border-radius: 4px; border-left: 3px solid var(--oro);">
-                        <div class="form-check mb-2">
-                            <input class="form-check-input check-pareja" type="checkbox" id="cp-${id}">
-                            <label class="form-check-label small fw-bold" for="cp-${id}">VOY CON MI PAREJA</label>
-                        </div>
-                        <div class="campo-pareja mt-3" style="display:none;">
-                            <div class="mb-3">
-                                <label class="form-label small fw-bold">NOMBRE DE TU PAREJA</label>
-                                <input type="text" class="form-control input-pareja" name="nombre_pareja" placeholder="Nombre completo">
-                            </div>
-                            <div class="mb-2">
-                                <label class="form-label small fw-bold">RESTRICCIÓN ALIMENTARIA (PAREJA)</label>
-                                <select class="form-select dieta-pareja" name="dieta_pareja">
-                                    <option value="Ninguna">Ninguna</option>
-                                    <option value="Vegano">Vegano(a)</option>
-                                    <option value="Vegetariano">Vegetariano(a)</option>
-                                    <option value="Celiaco">Celiaco</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>`;
-        }
-
-        function agregarInvitado() {
-            contadorInvitados++;
-            listaDinamica.insertAdjacentHTML('beforeend', crearBloqueInvitado(contadorInvitados));
-            const bloque = document.getElementById(`invitado-${contadorInvitados}`);
-            
-            const inputNombre = bloque.querySelector('.nombre-buscar');
-            const sugerenciasBox = bloque.querySelector('.sugerencias-container');
-            const datosExtra = bloque.querySelector('.datos-extra');
-            const seccionPareja = bloque.querySelector('.seccion-pareja-opcional');
-
-            inputNombre.addEventListener('input', function() {
-                const val = this.value.toLowerCase();
-                sugerenciasBox.innerHTML = '';
-                datosExtra.style.display = 'none';
-                
-                if (!val) {
-                    sugerenciasBox.style.display = 'none';
-                    return;
-                }
-                
-                const filtrados = listaInvitadosGlobal.filter(n => n.nombre_invitado.toLowerCase().includes(val));
-                
-                if (filtrados.length > 0) {
-                    filtrados.forEach(inv => {
-                        const divItem = document.createElement('div');
-                        divItem.className = 'sugerencia-item';
-                        divItem.innerText = inv.nombre_invitado;
-                        
-                        divItem.onclick = function() {
-                            inputNombre.value = inv.nombre_invitado;
-                            sugerenciasBox.style.display = 'none';
-                            datosExtra.style.display = 'block';
-                            
-                            if (inv.permite_pareja === 1 || inv.permite_pareja === "1") {
-                                seccionPareja.style.display = 'block';
-                            } else {
-                                seccionPareja.style.display = 'none';
-                                bloque.querySelector('.check-pareja').checked = false;
-                                bloque.querySelector('.campo-pareja').style.display = 'none';
-                            }
-                        };
-                        sugerenciasBox.appendChild(divItem);
-                    });
-                    sugerenciasBox.style.display = 'block';
-                } else {
-                    sugerenciasBox.style.display = 'none';
-                }
-            });
-
-            document.addEventListener('click', function(e) {
-                if (e.target !== inputNombre && e.target !== sugerenciasBox) {
-                    sugerenciasBox.style.display = 'none';
-                }
-            });
-
-            bloque.querySelector('.check-pareja').addEventListener('change', function() { bloque.querySelector('.campo-pareja').style.display = this.checked ? 'block' : 'none'; });
-            bloque.querySelector('.rut-input').addEventListener('blur', function() { let rutLimpio = limpiarRut(this.value); if (rutLimpio.length >= 2) { this.value = darFormatoRut(rutLimpio); } });
-
-            const inputTel = bloque.querySelector('.tel-input');
-            inputTel.addEventListener('blur', function() {
-                let telRaw = this.value.replace(/[\s\-\(\)]/g, ''); 
-                if (/^\d{8}$/.test(telRaw)) this.value = '+569' + telRaw;
-                else if (/^9\d{8}$/.test(telRaw)) this.value = '+56' + telRaw;
-                else if (/^569\d{8}$/.test(telRaw)) this.value = '+' + telRaw;
-                let digitos = this.value.replace(/\D/g, '');
-                if (digitos.length > 0 && digitos.length < 8) { this.setCustomValidity("Número muy corto."); this.reportValidity(); } else { this.setCustomValidity(""); }
-            });
-            inputTel.addEventListener('input', function() { this.setCustomValidity(""); });
-        }
-
-        btnSolo.onclick = () => { listaDinamica.innerHTML = ''; contadorInvitados = 0; agregarInvitado(); contenedorFormulario.style.display = 'block'; btnAgregarFamiliar.style.display = 'none'; };
-        btnGrupo.onclick = () => { listaDinamica.innerHTML = ''; contadorInvitados = 0; agregarInvitado(); contenedorFormulario.style.display = 'block'; btnAgregarFamiliar.style.display = 'block'; };
-        btnAgregarFamiliar.onclick = agregarInvitado;
-
-        document.getElementById('rsvpForm').onsubmit = function(e) {
-            e.preventDefault();
-            if (!SCRIPT_URL) { alert("El sistema se está inicializando, intenta de nuevo en unos segundos."); return; }
-
-            const btn = document.getElementById('btn-enviar-rsvp');
-            btn.innerText = "ENVIANDO..."; btn.disabled = true;
-
-            const bloques = document.querySelectorAll('.bloque-invitado');
-            const listaParaEnviar = [];
-
-            for (let b of bloques) {
-                const nombre = b.querySelector('.nombre-buscar').value;
-                
-                const existeEnBd = listaInvitadosGlobal.some(inv => inv.nombre_invitado === nombre);
-                if (!existeEnBd) {
-                    alert(`El nombre "${nombre}" no se encuentra en la lista de invitados. Por favor, búscalo en el listado desplegable.`);
-                    btn.innerText = "Enviar Confirmación"; btn.disabled = false; return;
-                }
-
-                const rutRaw = b.querySelector('[name="rut"]').value;
-                const rutLimpio = limpiarRut(rutRaw);
-                
-                if (!validarRutAlgoritmo(rutLimpio)) { alert(`El RUT ingresado para ${nombre} no es válido.`); btn.innerText = "Enviar Confirmación"; btn.disabled = false; return; }
-                const telInput = b.querySelector('.tel-input');
-                if (telInput.value.replace(/\D/g, '').length < 8) { telInput.setCustomValidity("Número muy corto."); telInput.reportValidity(); btn.innerText = "Enviar Confirmación"; btn.disabled = false; return; }
-
-                listaParaEnviar.push({
-                    nombre_invitado: nombre, 
-                    rut: darFormatoRut(rutLimpio), 
-                    email: b.querySelector('[name="email"]').value,
-                    telefono: telInput.value, 
-                    dieta: b.querySelector('[name="dieta"]').value,
-                    lleva_pareja: b.querySelector('.check-pareja').checked, 
-                    nombre_pareja: b.querySelector('.input-pareja') ? b.querySelector('.input-pareja').value : "-",
-                    dieta_pareja: b.querySelector('.dieta-pareja') ? b.querySelector('.dieta-pareja').value : "-"
-                });
-            }
-
-            fetch(SCRIPT_URL, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ tipo: "rsvp", invitados: listaParaEnviar, asunto: asuntoRSVP, cuerpo: cuerpoRSVP })
-            }).then(res => res.json()).then(data => { alert("¡Muchas gracias! Asistencia confirmada."); location.reload(); }).catch(err => { alert("Confirmado con éxito."); location.reload(); });
-        };
-
-        setInterval(() => {
-            if(!targetContador) return;
-            const dist = new Date(targetContador).getTime() - new Date().getTime();
-            const d = Math.floor(dist / (1000 * 60 * 60 * 24)), h = Math.floor((dist % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)), m = Math.floor((dist % (1000 * 60 * 60)) / (1000 * 60)), s = Math.floor((dist % (1000 * 60)) / 1000);
-            document.getElementById("contador").innerHTML = `<div><span class="fs-1 fw-bold">${d}</span><br><small>DÍAS</small></div><div><span class="fs-1 fw-bold">${h}</span><br><small>HRS</small></div><div><span class="fs-1 fw-bold">${m}</span><br><small>MIN</small></div><div><span class="fs-1 fw-bold">${s}</span><br><small>SEG</small></div>`;
-        }, 1000);
-
-        let lastScroll = 0;
-        window.addEventListener("scroll", () => {
-            const currentScroll = window.pageYOffset;
-            const nav = document.getElementById("navbar");
-            if (currentScroll > lastScroll && currentScroll > 100) nav.classList.add("nav-hidden");
-            else nav.classList.remove("nav-hidden");
-            lastScroll = currentScroll;
-        });
-    <AOS.init({ duration: 1000, once: true });
-
-        let SCRIPT_URL = "", asuntoRSVP = "", cuerpoRSVP = "", targetContador = null, listaInvitadosGlobal = [];
-
-        async function inicializarSitio() {
-            try {
-                const cfgRes = await fetch('config.json');
-                const cfg = await cfgRes.json();
-                SCRIPT_URL = cfg.worker_url;
-                /* ... (Toda tu lógica de carga de textos de DOM va aquí igual que antes) ... */
-                targetContador = cfg.fecha_contador;
-                asuntoRSVP = cfg.email_asunto_rsvp;
-
-                if (SCRIPT_URL) {
-                    // LLAMA A LA BASE DE DATOS MAESTRA
-                    const dbRes = await fetch(SCRIPT_URL + "?action=lista");
-                    listaInvitadosGlobal = await dbRes.json();
-                }
-            } catch (e) { console.error(e); }
-            fetch('cuerpo_rsvp.txt').then(r => r.text()).then(t => cuerpoRSVP = t.trim()).catch(e => console.log(e));
-        }
-        inicializarSitio();
-
-        function limpiarRut(rut) { return rut.replace(/[^0-9kK]/g, '').toUpperCase(); }
-        function darFormatoRut(rutLimpio) {
-            if(rutLimpio.length <= 1) return rutLimpio;
-            let cuerpo = rutLimpio.slice(0, -1), dv = rutLimpio.slice(-1);
-            return cuerpo.replace(/\B(?=(\d{3})+(?!\d))/g, ".") + "-" + dv;
-        }
-
-        const listaDinamica = document.getElementById('lista-invitados-dinamica');
-        
-        function crearBloqueInvitado() {
-            const id = Math.random().toString(36).substr(2, 9);
-            return `
-            <div class="bloque-invitado mb-4 pb-4 border-bottom" id="invitado-${id}">
-                <div class="mb-3 position-relative">
-                    <label class="form-label small fw-bold" style="color:var(--oro);">NOMBRE COMPLETO</label>
-                    <input type="text" class="form-control bg-transparent nombre-buscar" autocomplete="off" placeholder="Escribe para buscar..." required style="border:1px solid var(--oro);">
-                    <div class="sugerencias-container"></div>
-                </div>
-                <div class="datos-extra" style="display:none;">
-                    <div class="row g-3">
-                        <div class="col-md-6 mb-3"><label class="form-label small fw-bold">RUT</label><input type="text" class="form-control rut-input" name="rut" placeholder="Ej: 12.345.678-9" required></div>
-                        <div class="col-md-6 mb-3"><label class="form-label small fw-bold">TELÉFONO</label><input type="tel" class="form-control tel-input" name="telefono" placeholder="Ej: +569..." required></div>
-                    </div>
-                    <div class="mb-3"><label class="form-label small fw-bold">CORREO</label><input type="email" class="form-control" name="email" required></div>
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold">RESTRICCIÓN ALIMENTARIA</label>
-                        <select class="form-select" name="dieta" required><option value="Ninguna">Ninguna</option><option value="Vegano">Vegano(a)</option><option value="Vegetariano">Vegetariano(a)</option><option value="Celiaco">Celiaco</option></select>
-                    </div>
                     
-                    <div class="seccion-pareja-opcional mt-3" style="display:none; background:#f9f5f1; padding:15px; border-left:3px solid var(--oro);">
+                    <div class="seccion-pareja-opcional mt-4" style="display:none; background: rgba(181, 154, 122, 0.05); padding: 15px; border-radius: 4px; border-left: 3px solid var(--oro);">
                         <div class="form-check mb-2">
                             <input class="form-check-input check-pareja" type="checkbox" id="cp-${id}">
                             <label class="form-check-label small fw-bold" for="cp-${id}">CONFIRMAR A MI PAREJA</label>
                         </div>
+                        
                         <div class="opciones-nombre-pareja" style="display:none;">
                             <label class="form-label small fw-bold mt-2">¿Tienes su nombre?</label>
                             <div class="d-flex gap-3 mb-2">
@@ -622,8 +414,14 @@
                             <div class="datos-pareja-si mt-3" style="display:none;">
                                 <input type="text" class="form-control mb-2 input-nombre-pareja" placeholder="Nombre completo de tu pareja">
                                 <input type="text" class="form-control mb-2 input-rut-pareja" placeholder="RUT de tu pareja (Opcional)">
-                                <select class="form-select dieta-pareja"><option value="Ninguna">Restricción Alimentaria (Ninguna)</option><option value="Vegano">Vegano(a)</option><option value="Vegetariano">Vegetariano(a)</option><option value="Celiaco">Celiaco</option></select>
+                                <select class="form-select dieta-pareja">
+                                    <option value="Ninguna">Restricción Alimentaria (Ninguna)</option>
+                                    <option value="Vegano">Vegano(a)</option>
+                                    <option value="Vegetariano">Vegetariano(a)</option>
+                                    <option value="Celiaco">Celiaco</option>
+                                </select>
                             </div>
+                            
                             <div class="datos-pareja-no mt-3 alert alert-warning py-2" style="display:none; font-size:0.8rem; border-left:4px solid #ffc107;">
                                 Cuando tengas lista la pareja, máximo dos semanas antes, puedes avisar en caso de existir una restricción alimentaria.
                             </div>
@@ -633,7 +431,7 @@
             </div>`;
         }
 
-        // Delegación de eventos (Controla toda la lógica dinámica)
+        // LÓGICA DINÁMICA DE EVENTOS
         document.addEventListener('input', e => {
             if(e.target.classList.contains('nombre-buscar')) {
                 const b = e.target.closest('.bloque-invitado'), box = b.querySelector('.sugerencias-container');
@@ -643,7 +441,9 @@
                 box.innerHTML = filtrados.map(n => `<div class="sugerencia-item" data-nombre="${n.nombre}" data-pareja="${n.pareja}">${n.nombre}</div>`).join('');
                 box.style.display = filtrados.length ? 'block' : 'none';
             }
-            if(e.target.classList.contains('rut-input')) { e.target.value = darFormatoRut(limpiarRut(e.target.value)); }
+            if(e.target.classList.contains('rut-input') || e.target.classList.contains('input-rut-pareja')) { 
+                e.target.value = darFormatoRut(limpiarRut(e.target.value)); 
+            }
         });
 
         document.addEventListener('click', e => {
@@ -652,7 +452,6 @@
                 b.querySelector('.nombre-buscar').value = e.target.dataset.nombre;
                 b.querySelector('.sugerencias-container').style.display = 'none';
                 b.querySelector('.datos-extra').style.display = 'block';
-                // Lógica de validación de pareja desde la base maestra
                 b.querySelector('.seccion-pareja-opcional').style.display = (parseInt(e.target.dataset.pareja) === 1) ? 'block' : 'none';
             }
         });
@@ -674,41 +473,86 @@
             }
         });
 
-        document.getElementById('btn-solo').onclick = () => { listaDinamica.innerHTML = crearBloqueInvitado(); document.getElementById('rsvpForm').style.display='block'; document.getElementById('btn-agregar-familiar').style.display='none'; };
-        document.getElementById('btn-grupo').onclick = () => { listaDinamica.innerHTML = crearBloqueInvitado(); document.getElementById('rsvpForm').style.display='block'; document.getElementById('btn-agregar-familiar').style.display='block'; };
-        document.getElementById('btn-agregar-familiar').onclick = () => { listaDinamica.insertAdjacentHTML('beforeend', crearBloqueInvitado()); };
+        function inicializarValidacionTelefono(b) {
+            const inputTel = b.querySelector('.tel-input');
+            inputTel.addEventListener('blur', function() {
+                let telRaw = this.value.replace(/[\\s\\-\\(\\)]/g, ''); 
+                if (/^\\d{8}$/.test(telRaw)) this.value = '+569' + telRaw;
+                else if (/^9\\d{8}$/.test(telRaw)) this.value = '+56' + telRaw;
+                else if (/^569\\d{8}$/.test(telRaw)) this.value = '+' + telRaw;
+            });
+        }
+
+        btnSolo.onclick = () => { listaDinamica.innerHTML = ''; contadorInvitados = 0; agregarInvitado(); contenedorFormulario.style.display = 'block'; btnAgregarFamiliar.style.display = 'none'; };
+        btnGrupo.onclick = () => { listaDinamica.innerHTML = ''; contadorInvitados = 0; agregarInvitado(); contenedorFormulario.style.display = 'block'; btnAgregarFamiliar.style.display = 'block'; };
+        function agregarInvitado() { 
+            contadorInvitados++; 
+            listaDinamica.insertAdjacentHTML('beforeend', crearBloqueInvitado(contadorInvitados)); 
+            inicializarValidacionTelefono(document.getElementById(`invitado-${contadorInvitados}`));
+        }
+        btnAgregarFamiliar.onclick = agregarInvitado;
 
         document.getElementById('rsvpForm').onsubmit = function(e) {
             e.preventDefault();
+            if (!SCRIPT_URL) { alert("El sistema se está inicializando, intenta de nuevo en unos segundos."); return; }
+
             const bloques = document.querySelectorAll('.bloque-invitado');
             const listaParaEnviar = [];
 
             for (let b of bloques) {
                 const nombre = b.querySelector('.nombre-buscar').value;
                 const invitadoEnBD = listaInvitadosGlobal.find(inv => inv.nombre.toLowerCase() === nombre.toLowerCase());
-                if (!invitadoEnBD) { alert(`Selecciona a "${nombre}" de la lista desplegable.`); return; }
+                
+                if (!invitadoEnBD) {
+                    alert(`El nombre "${nombre}" no se encuentra en nuestra lista. Por favor, selecciónalo del listado desplegable al escribir.`);
+                    b.querySelector('.nombre-buscar').focus();
+                    return; 
+                }
+
+                const rutRaw = b.querySelector('[name="rut"]').value;
+                const rutLimpio = limpiarRut(rutRaw);
+                if (!validarRutAlgoritmo(rutLimpio)) { alert(`El RUT ingresado para ${nombre} no es válido.`); return; }
 
                 const llevaPareja = b.querySelector('.check-pareja')?.checked;
                 const tieneNombre = b.querySelector('.radio-tiene-nombre:checked')?.value;
 
                 listaParaEnviar.push({
                     nombre_invitado: invitadoEnBD.nombre,
-                    rut: darFormatoRut(limpiarRut(b.querySelector('[name="rut"]').value)),
+                    rut: darFormatoRut(rutLimpio), 
                     email: b.querySelector('[name="email"]').value,
-                    telefono: b.querySelector('.tel-input').value,
+                    telefono: b.querySelector('.tel-input').value, 
                     dieta: b.querySelector('[name="dieta"]').value,
-                    lleva_pareja: llevaPareja ? "Sí" : "No",
-                    nombre_pareja: llevaPareja ? (tieneNombre === 'si' ? b.querySelector('.input-nombre-pareja').value : 'Pendiente') : "-",
-                    rut_pareja: llevaPareja ? (tieneNombre === 'si' ? b.querySelector('.input-rut-pareja').value : '-') : "-",
-                    dieta_pareja: llevaPareja ? (tieneNombre === 'si' ? b.querySelector('.dieta-pareja').value : '-') : "-"
+                    lleva_pareja: llevaPareja ? "Sí" : "No", 
+                    nombre_pareja: llevaPareja ? (tieneNombre === 'si' ? b.querySelector('.input-nombre-pareja').value : "Pendiente") : "-",
+                    rut_pareja: llevaPareja ? (tieneNombre === 'si' ? (b.querySelector('.input-rut-pareja').value || "-") : "-") : "-",
+                    dieta_pareja: llevaPareja ? (tieneNombre === 'si' ? b.querySelector('.dieta-pareja').value : "-") : "-"
                 });
             }
 
-            const btn = document.getElementById('btn-enviar-rsvp'); btn.innerText = "ENVIANDO..."; btn.disabled = true;
-            fetch(SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tipo: "rsvp", invitados: listaParaEnviar, asunto: asuntoRSVP, cuerpo: cuerpoRSVP }) })
-            .then(res => res.json()).then(data => { alert("¡Confirmación guardada/actualizada con éxito!"); location.reload(); })
-            .catch(err => { alert("Confirmado."); location.reload(); });
+            const btn = document.getElementById('btn-enviar-rsvp');
+            btn.innerText = "ENVIANDO..."; btn.disabled = true;
+
+            fetch(SCRIPT_URL, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tipo: "rsvp", invitados: listaParaEnviar, asunto: asuntoRSVP, cuerpo: cuerpoRSVP })
+            }).then(res => res.json()).then(data => { alert("¡Confirmación guardada con éxito! Ya puedes modificar tus datos ingresando tu nombre nuevamente si lo necesitas."); location.reload(); }).catch(err => { alert("Confirmado con éxito."); location.reload(); });
         };
->
+
+        setInterval(() => {
+            if(!targetContador) return;
+            const dist = new Date(targetContador).getTime() - new Date().getTime();
+            const d = Math.floor(dist / (1000 * 60 * 60 * 24)), h = Math.floor((dist % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)), m = Math.floor((dist % (1000 * 60 * 60)) / (1000 * 60)), s = Math.floor((dist % (1000 * 60)) / 1000);
+            document.getElementById("contador").innerHTML = `<div><span class="fs-1 fw-bold">${d}</span><br><small>DÍAS</small></div><div><span class="fs-1 fw-bold">${h}</span><br><small>HRS</small></div><div><span class="fs-1 fw-bold">${m}</span><br><small>MIN</small></div><div><span class="fs-1 fw-bold">${s}</span><br><small>SEG</small></div>`;
+        }, 1000);
+
+        let lastScroll = 0;
+        window.addEventListener("scroll", () => {
+            const currentScroll = window.pageYOffset;
+            const nav = document.getElementById("navbar");
+            if (currentScroll > lastScroll && currentScroll > 100) nav.classList.add("nav-hidden");
+            else nav.classList.remove("nav-hidden");
+            lastScroll = currentScroll;
+        });
+    </script>
 </body>
 </html>

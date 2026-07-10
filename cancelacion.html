@@ -4,68 +4,234 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title id="cfg-page-title">Cancelar Asistencia</title>
+
+    <link rel="icon" href="favicon.png" type="image/png">
+
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Montserrat:wght@300;400;500&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
         :root { --oro: #b59a7a; --crema: #f2ece4; --texto: #2d2d2d; --oscuro: #1a1a1a; }
-        body { font-family: 'Montserrat', sans-serif; background-color: var(--crema); color: var(--texto); padding-top: 80px; }
-        h1, h2, .serif { font-family: 'Playfair Display', serif; }
-        .btn-gold { background: var(--oro); color: white; border: none; padding: 10px 20px; text-transform: uppercase; font-size: 0.65rem; }
-        .sugerencias-container { position: absolute; z-index: 1050; background: white; width: 100%; border: 1px solid var(--oro); display: none; }
-        .sugerencia-item { cursor: pointer; padding: 10px; border-bottom: 1px solid #eee; }
-        .sugerencia-item:hover { background: var(--crema); }
+        body { font-family: 'Montserrat', sans-serif; background-color: var(--crema); color: var(--texto); padding-top: 80px; overflow-x: hidden; }
+        h1, h2, h3, h4, h5, .serif { font-family: 'Playfair Display', serif; }
+        .navbar { background: rgba(242, 236, 228, 0.95); padding: 0.8rem 0; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .nav-link-custom { color: var(--texto); text-decoration: none; text-transform: uppercase; font-size: 0.65rem; letter-spacing: 1px; margin-right: 20px; font-weight: 500; transition: 0.3s; }
+        .nav-link-custom:hover { color: var(--oro); }
+        .btn-gold { background: var(--oro); color: var(--oscuro); font-weight: bold; border: none; padding: 10px 20px; text-transform: uppercase; letter-spacing: 1px; font-size: 0.65rem; text-decoration: none; display: inline-block; transition: 0.3s; text-align: center; cursor: pointer;}
+        .btn-gold:hover { background: var(--oscuro); color: var(--oro); }
+        .btn-outline { background: transparent; border: 1px solid var(--oro); color: var(--oro); }
+        .btn-outline:hover { background: var(--oro); color: white; }
+        .box-datos { background: white; border: 1px solid rgba(181, 154, 122, 0.3); border-radius: 4px; }
+        .input-readonly { background-color: #f9f9f9 !important; border: 1px solid #ddd !important; color: #888; }
+        
+        .sugerencias-container { position: absolute; z-index: 1050; background: white; width: 100%; max-height: 200px; overflow-y: auto; border: 1px solid var(--oro); border-top: none; border-radius: 0 0 4px 4px; display: none; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .sugerencia-item { cursor: pointer; padding: 10px 15px; border-bottom: 1px solid #f2ece4; font-size: 0.85rem; transition: background 0.2s;}
+        .sugerencia-item:last-child { border-bottom: none; }
+        .sugerencia-item:hover { background-color: var(--crema); color: var(--oro); font-weight: 500; }
     </style>
 </head>
 <body>
-    <nav class="navbar fixed-top bg-white shadow-sm"><div class="container"><a class="navbar-brand serif fw-bold" href="index.html">A <span style="color:var(--oro)">&</span> F</a></div></nav>
+
+    <nav class="navbar navbar-expand-lg fixed-top" id="navbar">
+        <div class="container d-flex align-items-center">
+            <a class="navbar-brand serif fw-bold" href="index.html">A <span style="color:var(--oro)">&</span> F</a>
+            <div class="ms-auto"><a href="index.html" class="nav-link-custom"><i class="bi bi-arrow-left"></i> Volver al inicio</a></div>
+        </div>
+    </nav>
+
     <section class="container py-5">
         <div class="row justify-content-center">
-            <div class="col-md-6 text-center">
-                <h2 class="serif mb-4">Cancelar Asistencia</h2>
-                <div id="seleccion-modo" class="d-flex gap-3 justify-content-center mb-4">
-                    <button id="btn-solo" class="btn-gold">Cancelar solo mi asistencia</button>
-                    <button id="btn-grupo" class="btn-gold">Cancelar grupo familiar</button>
+            <div class="col-md-8 col-lg-6">
+                <div class="text-center mb-4">
+                    <h2 class="serif">Cancelar Asistencia</h2>
+                    <p class="text-muted small">Solo puedes cancelar si ya habías confirmado tu asistencia previamente.</p>
                 </div>
-                <form id="cancelacionForm" class="box-datos p-4 border bg-white" style="display:none;">
-                    <div id="lista-cancelacion-dinamica"></div>
-                    <button type="button" id="btn-agregar-familiar" class="btn-gold mt-2" style="display:none;">Agregar otro</button>
-                    <div id="datos-contacto-seccion" class="mt-4 pt-4 border-top" style="display:none;">
-                        <textarea class="form-control mb-3" id="mensajeCancelacion" placeholder="Mensaje para los novios"></textarea>
-                        <button type="submit" class="btn-gold w-100">Enviar Cancelación</button>
-                    </div>
-                </form>
+
+                <div id="seleccion-modo" class="d-flex flex-column flex-md-row justify-content-center gap-3 mb-4">
+                    <button id="btn-solo" class="btn-gold flex-grow-1">Cancelar solo mi asistencia</button>
+                    <button id="btn-grupo" class="btn-gold btn-outline flex-grow-1">Cancelar grupo familiar</button>
+                </div>
+
+                <div id="contenedor-formulario" style="display: none;">
+                    <form id="cancelacionForm" class="box-datos p-4 shadow-sm">
+                        
+                        <div id="lista-cancelacion-dinamica"></div>
+                        
+                        <button type="button" id="btn-agregar-familiar" class="btn-gold btn-outline w-100 mb-4 mt-2" style="display: none;">
+                            <i class="bi bi-plus me-1"></i> Ingresar otra persona a cancelar
+                        </button>
+
+                        <div id="datos-contacto-seccion" style="display:none;" class="mt-4 pt-4 border-top">
+                            <div class="row g-3">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label small fw-bold">TU CORREO</label>
+                                    <input type="email" class="form-control input-readonly" id="emailCancelacion" readonly>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label small fw-bold">TU TELÉFONO</label>
+                                    <input type="tel" class="form-control input-readonly" id="telefonoCancelacion" readonly>
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label small fw-bold">MENSAJE PARA LOS NOVIOS (Opcional)</label>
+                                <textarea class="form-control bg-transparent" id="mensajeCancelacion" rows="3" style="border:1px solid var(--oro);"></textarea>
+                            </div>
+                            
+                            <button type="submit" id="btn-enviar-cancelacion" class="btn-gold w-100 border-0">Enviar Cancelación</button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </section>
+
     <script>
-        let SCRIPT_URL = "", listaNombresGlobal = [];
-        async function init() {
-            const cfg = await (await fetch('config.json')).json();
-            SCRIPT_URL = cfg.worker_url;
-            const data = await (await fetch(SCRIPT_URL)).json();
-            listaNombresGlobal = data.map(i => i.nombre_invitado);
+        let SCRIPT_URL = "";
+        let asuntoCancelacion = "Cancelación de asistencia confirmada";
+        let cuerpoCancelacion = "Hemos procesado tu cancelación.";
+        let listaNombresGlobal = [];
+
+        async function inicializarCancelacion() {
+            try {
+                const cfgRes = await fetch('config.json');
+                const cfg = await cfgRes.json();
+                
+                SCRIPT_URL = cfg.worker_url;
+                asuntoCancelacion = cfg.email_asunto_cancelacion;
+                document.getElementById('cfg-page-title').innerText = "Cancelar Asistencia — " + cfg.nombres_hero.replace(/<[^>]*>?/gm, '');
+
+                if (SCRIPT_URL) {
+                    // BUSCAMOS SOLAMENTE EN LA TABLA DE CONFIRMADOS
+                    const dbRes = await fetch(SCRIPT_URL + "?action=confirmados");
+                    const data = await dbRes.json();
+                    listaNombresGlobal = data.filter(item => item.nombre).map(item => item.nombre);
+                }
+            } catch (err) {
+                console.error("Error al cargar configuración", err);
+            }
+
+            fetch('cuerpo_cancelacion.txt').then(r => r.text()).then(t => cuerpoCancelacion = t.trim()).catch(e => console.log("Usando cuerpo por defecto."));
         }
-        init();
-        let contador = 0;
-        const listaDinamica = document.getElementById('lista-cancelacion-dinamica');
-        function agregarBloque() {
-            contador++;
-            listaDinamica.insertAdjacentHTML('beforeend', `<div class="mb-3 position-relative" id="block-${contador}"><input type="text" class="form-control nombre-buscar" placeholder="Busca tu nombre..." required><div class="sugerencias-container"></div></div>`);
-            const bloque = document.getElementById(`block-${contador}`), input = bloque.querySelector('.nombre-buscar'), box = bloque.querySelector('.sugerencias-container');
-            input.addEventListener('input', function() {
-                const filtrados = listaNombresGlobal.filter(n => n.toLowerCase().includes(this.value.toLowerCase()));
-                box.innerHTML = filtrados.map(n => `<div class="sugerencia-item">${n}</div>`).join('');
-                box.style.display = filtrados.length ? 'block' : 'none';
+
+        inicializarCancelacion();
+
+        let contadorCancelados = 0;
+        const btnSolo = document.getElementById('btn-solo'), btnGrupo = document.getElementById('btn-grupo'), contenedorFormulario = document.getElementById('contenedor-formulario'), listaDinamica = document.getElementById('lista-cancelacion-dinamica'), btnAgregarFamiliar = document.getElementById('btn-agregar-familiar'), contactoSeccion = document.getElementById('datos-contacto-seccion');
+
+        function crearBloqueCancelacion(id) {
+            return `
+            <div class="bloque-cancelado mb-4" id="cancelado-${id}">
+                ${id > 1 ? `<div class="d-flex justify-content-between mb-2"><h6 class="serif m-0" style="color:var(--oro);">Persona #${id}</h6><button type="button" class="btn-close" onclick="document.getElementById('cancelado-${id}').remove()"></button></div>` : ''}
+                <div class="mb-3 position-relative">
+                    <label class="form-label small fw-bold" style="color:var(--oro);">NOMBRE</label>
+                    <input type="text" class="form-control bg-transparent nombre-buscar" name="nombre" autocomplete="off" placeholder="Escribe para buscar..." required style="border:1px solid var(--oro);">
+                    <div class="sugerencias-container"></div>
+                </div>
+            </div>`;
+        }
+
+        function agregarCancelado() {
+            contadorCancelados++;
+            listaDinamica.insertAdjacentHTML('beforeend', crearBloqueCancelacion(contadorCancelados));
+            const bloque = document.getElementById(`cancelado-${contadorCancelados}`);
+            const inputNombre = bloque.querySelector('.nombre-buscar');
+            const sugerenciasBox = bloque.querySelector('.sugerencias-container');
+
+            inputNombre.addEventListener('input', function() {
+                const val = this.value.toLowerCase();
+                sugerenciasBox.innerHTML = '';
+                
+                if (!val) { sugerenciasBox.style.display = 'none'; return; }
+                
+                const filtrados = listaNombresGlobal.filter(n => n.toLowerCase().includes(val));
+                
+                if (filtrados.length > 0) {
+                    filtrados.forEach(nombre => {
+                        const divItem = document.createElement('div');
+                        divItem.className = 'sugerencia-item';
+                        divItem.innerText = nombre;
+                        
+                        divItem.onclick = async function() {
+                            inputNombre.value = nombre;
+                            sugerenciasBox.style.display = 'none';
+                            
+                            if (SCRIPT_URL) {
+                                try {
+                                    const res = await fetch(SCRIPT_URL + "?action=confirmados&nombre=" + encodeURIComponent(nombre));
+                                    const data = await res.json();
+                                    if (data.email) {
+                                        if(!document.getElementById('emailCancelacion').value) {
+                                            document.getElementById('emailCancelacion').value = data.email;
+                                            document.getElementById('telefonoCancelacion').value = data.telefono;
+                                        }
+                                        contactoSeccion.style.display = 'block';
+
+                                        if (data.lleva_pareja === "Sí" && data.nombre_pareja && data.nombre_pareja !== "-" && data.nombre_pareja !== "Pendiente") {
+                                            let aviso = bloque.querySelector('.aviso-pareja-cancela');
+                                            if (!aviso) {
+                                                bloque.insertAdjacentHTML('beforeend', `<div class="aviso-pareja-cancela alert alert-warning p-2 mt-3" style="font-size: 0.75rem;"><i class="bi bi-info-circle me-1"></i>Al confirmar, también se cancelará la asistencia de tu acompañante registrado: <strong>${data.nombre_pareja}</strong>.</div>`);
+                                            }
+                                        }
+                                    }
+                                } catch (e) { console.error("Error", e); }
+                            }
+                        };
+                        sugerenciasBox.appendChild(divItem);
+                    });
+                    sugerenciasBox.style.display = 'block';
+                } else {
+                    sugerenciasBox.style.display = 'none';
+                }
             });
-            box.onclick = function(e) { input.value = e.target.innerText; box.style.display = 'none'; document.getElementById('datos-contacto-seccion').style.display = 'block'; };
+
+            document.addEventListener('click', function(e) {
+                if (e.target !== inputNombre && e.target !== sugerenciasBox) { sugerenciasBox.style.display = 'none'; }
+            });
         }
-        document.getElementById('btn-solo').onclick = () => { listaDinamica.innerHTML = ''; contador=0; agregarBloque(); document.getElementById('cancelacionForm').style.display = 'block'; document.getElementById('btn-agregar-familiar').style.display = 'none'; };
-        document.getElementById('btn-grupo').onclick = () => { listaDinamica.innerHTML = ''; contador=0; agregarBloque(); document.getElementById('cancelacionForm').style.display = 'block'; document.getElementById('btn-agregar-familiar').style.display = 'block'; };
-        document.getElementById('btn-agregar-familiar').onclick = agregarBloque;
+
+        btnSolo.onclick = () => { listaDinamica.innerHTML = ''; contadorCancelados = 0; document.getElementById('emailCancelacion').value = ''; contactoSeccion.style.display = 'none'; agregarCancelado(); contenedorFormulario.style.display = 'block'; btnAgregarFamiliar.style.display = 'none'; };
+        btnGrupo.onclick = () => { listaDinamica.innerHTML = ''; contadorCancelados = 0; document.getElementById('emailCancelacion').value = ''; contactoSeccion.style.display = 'none'; agregarCancelado(); contenedorFormulario.style.display = 'block'; btnAgregarFamiliar.style.display = 'block'; };
+        btnAgregarFamiliar.onclick = agregarCancelado;
+
         document.getElementById('cancelacionForm').onsubmit = function(e) {
             e.preventDefault();
-            const nombres = Array.from(document.querySelectorAll('.nombre-buscar')).map(i => ({nombre: i.value}));
-            fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ tipo: "cancelacion", invitados: nombres }) }).then(() => { alert("Cancelado."); location.href = "index.html"; });
+            if (!SCRIPT_URL) { alert("El sistema se está inicializando. Intenta en un segundo."); return; }
+
+            const btn = document.getElementById('btn-enviar-cancelacion');
+            btn.innerText = "PROCESANDO..."; btn.disabled = true;
+
+            const bloques = document.querySelectorAll('.bloque-cancelado');
+            const listaParaEnviar = [];
+
+            for (let b of bloques) {
+                const nombre = b.querySelector('.nombre-buscar').value;
+                if(nombre) listaParaEnviar.push({ nombre: nombre });
+            }
+
+            fetch(SCRIPT_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tipo: "cancelacion",
+                    invitados: listaParaEnviar,
+                    email: document.getElementById('emailCancelacion').value,
+                    telefono: document.getElementById('telefonoCancelacion').value,
+                    mensaje: document.getElementById('mensajeCancelacion').value,
+                    asunto: asuntoCancelacion,
+                    cuerpo: cuerpoCancelacion
+                })
+            })
+            .then(async res => {
+                const data = await res.json();
+                if(data.error) throw new Error(data.error); 
+                alert("Cancelación procesada con éxito.");
+                window.location.href = "index.html";
+            })
+            .catch(err => {
+                alert("Error: " + err.message);
+                btn.innerText = "Enviar Cancelación"; btn.disabled = false;
+            });
         };
     </script>
 </body>
