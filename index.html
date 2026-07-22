@@ -346,24 +346,6 @@
 
         inicializarSitio();
 
-        function limpiarRut(rut) { return rut.replace(/[^0-9kK]/g, '').toUpperCase(); }
-        function validarRutAlgoritmo(rutLimpio) {
-            if (rutLimpio.length < 8) return false;
-            let cuerpo = rutLimpio.slice(0, -1), dv = rutLimpio.slice(-1), suma = 0, multiplo = 2;
-            for (let i = cuerpo.length - 1; i >= 0; i--) {
-                suma += parseInt(cuerpo.charAt(i)) * multiplo;
-                multiplo = multiplo < 7 ? multiplo + 1 : 2;
-            }
-            let dvEsperado = 11 - (suma % 11);
-            if (dvEsperado === 11) dvEsperado = "0"; else if (dvEsperado === 10) dvEsperado = "K";
-            return dv === dvEsperado.toString();
-        }
-        function darFormatoRut(rutLimpio) {
-            if (rutLimpio.length <= 1) return rutLimpio;
-            let cuerpo = rutLimpio.slice(0, -1), dv = rutLimpio.slice(-1);
-            return cuerpo.replace(/\B(?=(\d{3})+(?!\d))/g, ".") + "-" + dv;
-        }
-
         let contadorInvitados = 0;
         const btnSolo = document.getElementById('btn-solo'), btnGrupo = document.getElementById('btn-grupo'), contenedorFormulario = document.getElementById('contenedor-formulario'), listaDinamica = document.getElementById('lista-invitados-dinamica'), btnAgregarFamiliar = document.getElementById('btn-agregar-familiar');
 
@@ -378,18 +360,19 @@
                 </div>
                 <div class="datos-extra" style="display:none;">
                     <div class="row g-3">
-                        <div class="col-md-6 mb-3"><label class="form-label small fw-bold">RUT</label><input type="text" class="form-control rut-input" name="rut" placeholder="Ej: 12.345.678-9" required></div>
                         <div class="col-md-6 mb-3"><label class="form-label small fw-bold">TELÉFONO</label><input type="tel" class="form-control tel-input" name="telefono" placeholder="Ej: 98765432 o +569..." required></div>
+                        <div class="col-md-6 mb-3"><label class="form-label small fw-bold">CORREO</label><input type="email" class="form-control" name="email" required></div>
                     </div>
-                    <div class="mb-3"><label class="form-label small fw-bold">CORREO</label><input type="email" class="form-control" name="email" required></div>
                     <div class="mb-3">
                         <label class="form-label small fw-bold">RESTRICCIÓN ALIMENTARIA</label>
-                        <select class="form-select" name="dieta" required>
+                        <select class="form-select select-dieta" name="dieta" required>
                             <option value="Ninguna">Ninguna</option>
                             <option value="Vegano">Vegano(a)</option>
                             <option value="Vegetariano">Vegetariano(a)</option>
                             <option value="Celiaco">Celiaco</option>
+                            <option value="Otro">Otro</option>
                         </select>
+                        <input type="text" class="form-control mt-2 input-dieta-otro" placeholder="Por favor, especifica tu restricción..." style="display:none;">
                     </div>
                     
                     <div class="seccion-pareja-opcional mt-4" style="display:none; background: rgba(181, 154, 122, 0.05); padding: 15px; border-radius: 4px; border-left: 3px solid var(--oro);">
@@ -413,13 +396,14 @@
                             
                             <div class="datos-pareja-si mt-3" style="display:none;">
                                 <input type="text" class="form-control mb-2 input-nombre-pareja" placeholder="Nombre completo de tu pareja">
-                                <input type="text" class="form-control mb-2 input-rut-pareja" placeholder="RUT de tu pareja (Opcional)">
                                 <select class="form-select dieta-pareja">
                                     <option value="Ninguna">Restricción Alimentaria (Ninguna)</option>
                                     <option value="Vegano">Vegano(a)</option>
                                     <option value="Vegetariano">Vegetariano(a)</option>
                                     <option value="Celiaco">Celiaco</option>
+                                    <option value="Otro">Otro</option>
                                 </select>
+                                <input type="text" class="form-control mt-2 input-dieta-pareja-otro" placeholder="Por favor, especifica la restricción..." style="display:none;">
                             </div>
                             
                             <div class="datos-pareja-no mt-3 alert alert-warning py-2" style="display:none; font-size:0.8rem; border-left:4px solid #ffc107;">
@@ -440,9 +424,6 @@
                 const filtrados = listaInvitadosGlobal.filter(n => n.nombre.toLowerCase().includes(val));
                 box.innerHTML = filtrados.map(n => `<div class="sugerencia-item" data-nombre="${n.nombre}" data-pareja="${n.pareja}">${n.nombre}</div>`).join('');
                 box.style.display = filtrados.length ? 'block' : 'none';
-            }
-            if(e.target.classList.contains('rut-input') || e.target.classList.contains('input-rut-pareja')) { 
-                e.target.value = darFormatoRut(limpiarRut(e.target.value)); 
             }
         });
 
@@ -471,15 +452,35 @@
                     parent.querySelector('.datos-pareja-no').style.display = 'block';
                 }
             }
+            if(e.target.classList.contains('select-dieta')) {
+                const inputOtro = e.target.closest('.mb-3').querySelector('.input-dieta-otro');
+                if(e.target.value === 'Otro') {
+                    inputOtro.style.display = 'block';
+                    inputOtro.required = true;
+                } else {
+                    inputOtro.style.display = 'none';
+                    inputOtro.required = false;
+                    inputOtro.value = '';
+                }
+            }
+            if(e.target.classList.contains('dieta-pareja')) {
+                const inputOtroP = e.target.closest('.datos-pareja-si').querySelector('.input-dieta-pareja-otro');
+                if(e.target.value === 'Otro') {
+                    inputOtroP.style.display = 'block';
+                } else {
+                    inputOtroP.style.display = 'none';
+                    inputOtroP.value = '';
+                }
+            }
         });
 
         function inicializarValidacionTelefono(b) {
             const inputTel = b.querySelector('.tel-input');
             inputTel.addEventListener('blur', function() {
-                let telRaw = this.value.replace(/[\\s\\-\\(\\)]/g, ''); 
-                if (/^\\d{8}$/.test(telRaw)) this.value = '+569' + telRaw;
-                else if (/^9\\d{8}$/.test(telRaw)) this.value = '+56' + telRaw;
-                else if (/^569\\d{8}$/.test(telRaw)) this.value = '+' + telRaw;
+                let telRaw = this.value.replace(/[\s\-\(\)]/g, ''); 
+                if (/^\d{8}$/.test(telRaw)) this.value = '+569' + telRaw;
+                else if (/^9\d{8}$/.test(telRaw)) this.value = '+56' + telRaw;
+                else if (/^569\d{8}$/.test(telRaw)) this.value = '+' + telRaw;
             });
         }
 
@@ -509,23 +510,23 @@
                     return; 
                 }
 
-                const rutRaw = b.querySelector('[name="rut"]').value;
-                const rutLimpio = limpiarRut(rutRaw);
-                if (!validarRutAlgoritmo(rutLimpio)) { alert(`El RUT ingresado para ${nombre} no es válido.`); return; }
-
                 const llevaPareja = b.querySelector('.check-pareja')?.checked;
                 const tieneNombre = b.querySelector('.radio-tiene-nombre:checked')?.value;
+                
+                let dietaSeleccionada = b.querySelector('.select-dieta').value;
+                let dietaFinal = dietaSeleccionada === 'Otro' ? b.querySelector('.input-dieta-otro').value : dietaSeleccionada;
+                
+                let dietaParejaSeleccionada = llevaPareja && tieneNombre === 'si' ? b.querySelector('.dieta-pareja').value : "-";
+                let dietaParejaFinal = dietaParejaSeleccionada === 'Otro' ? b.querySelector('.input-dieta-pareja-otro').value : dietaParejaSeleccionada;
 
                 listaParaEnviar.push({
                     nombre_invitado: invitadoEnBD.nombre,
-                    rut: darFormatoRut(rutLimpio), 
                     email: b.querySelector('[name="email"]').value,
                     telefono: b.querySelector('.tel-input').value, 
-                    dieta: b.querySelector('[name="dieta"]').value,
+                    dieta: dietaFinal,
                     lleva_pareja: llevaPareja ? "Sí" : "No", 
                     nombre_pareja: llevaPareja ? (tieneNombre === 'si' ? b.querySelector('.input-nombre-pareja').value : "Pendiente") : "-",
-                    rut_pareja: llevaPareja ? (tieneNombre === 'si' ? (b.querySelector('.input-rut-pareja').value || "-") : "-") : "-",
-                    dieta_pareja: llevaPareja ? (tieneNombre === 'si' ? b.querySelector('.dieta-pareja').value : "-") : "-"
+                    dieta_pareja: dietaParejaFinal
                 });
             }
 
